@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.answer import Answer, AnswerCreate, AnswerUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.answer_repository import AnswerRepository
 
 router = APIRouter(prefix="/answers", tags=["answers"])
 answer_repo = AnswerRepository()
 
 
-@router.get("/", response_model=List[Answer])
-def get_answers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    answers = answer_repo.get_multi(db, skip=skip, limit=limit)
-    return answers
+@router.get("/", response_model=PaginatedResponse[Answer])
+def get_answers(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{answer_id}", response_model=Answer)
@@ -89,41 +95,73 @@ def delete_answer(answer_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Answer deleted successfully"}
 
 
-@router.get("/worker/{worker_id}", response_model=List[Answer])
-def get_answers_by_worker(worker_id: UUID, db: Session = Depends(get_db)):
-    answers = answer_repo.get_by_worker(db, worker_id=worker_id)
-    return answers
+@router.get("/worker/{worker_id}", response_model=PaginatedResponse[Answer])
+def get_answers_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/course/{course_id}", response_model=List[Answer])
-def get_answers_by_course(course_id: UUID, db: Session = Depends(get_db)):
-    answers = answer_repo.get_by_course(db, course_id=course_id)
-    return answers
+@router.get("/course/{course_id}", response_model=PaginatedResponse[Answer])
+def get_answers_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/question/{question_id}", response_model=List[Answer])
-def get_answers_by_question(question_id: UUID, db: Session = Depends(get_db)):
-    answers = answer_repo.get_by_question(db, question_id=question_id)
-    return answers
+@router.get("/question/{question_id}", response_model=PaginatedResponse[Answer])
+def get_answers_by_question(question_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.get_by_question_paginated(db, question_id=question_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/worker/{worker_id}/course/{course_id}", response_model=List[Answer])
+@router.get("/worker/{worker_id}/course/{course_id}", response_model=PaginatedResponse[Answer])
 def get_answers_by_worker_and_course(
     worker_id: UUID, 
     course_id: UUID, 
+    page: int = 1, 
+    limit: int = 100, 
     db: Session = Depends(get_db)
 ):
-    answers = answer_repo.get_by_worker_and_course(db, worker_id=worker_id, course_id=course_id)
-    return answers
+    answers, total_pages, total_count = answer_repo.get_by_worker_and_course_paginated(db, worker_id=worker_id, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/survey/{survey_id}", response_model=List[Answer])
-def get_answers_by_survey(survey_id: UUID, db: Session = Depends(get_db)):
-    answers = answer_repo.get_by_survey(db, survey_id=survey_id)
-    return answers
+@router.get("/survey/{survey_id}", response_model=PaginatedResponse[Answer])
+def get_answers_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.get_by_survey_paginated(db, survey_id=survey_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/search/{value}", response_model=List[Answer])
-def search_answers(value: str, db: Session = Depends(get_db)):
-    answers = answer_repo.search_by_value(db, value=value)
-    return answers
+@router.get("/search/{value}", response_model=PaginatedResponse[Answer])
+def search_answers(value: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    answers, total_pages, total_count = answer_repo.search_by_value_paginated(db, value=value, page=page, limit=limit)
+    return PaginatedResponse(
+        items=answers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

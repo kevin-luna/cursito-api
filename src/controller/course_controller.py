@@ -6,16 +6,22 @@ from datetime import date
 
 from ..database import get_db
 from ..dto.course import Course, CourseCreate, CourseUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.course_repository import CourseRepository
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 course_repo = CourseRepository()
 
 
-@router.get("/", response_model=List[Course])
-def get_courses(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    courses = course_repo.get_multi(db, skip=skip, limit=limit)
-    return courses
+@router.get("/", response_model=PaginatedResponse[Course])
+def get_courses(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{course_id}", response_model=Course)
@@ -93,42 +99,69 @@ def delete_course(course_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Course deleted successfully"}
 
 
-@router.get("/period/{period_id}", response_model=List[Course])
-def get_courses_by_period(period_id: UUID, db: Session = Depends(get_db)):
-    courses = course_repo.get_by_period(db, period_id=period_id)
-    return courses
+@router.get("/period/{period_id}", response_model=PaginatedResponse[Course])
+def get_courses_by_period(period_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.get_by_period_paginated(db, period_id=period_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/type/{course_type}", response_model=List[Course])
-def get_courses_by_type(course_type: int, db: Session = Depends(get_db)):
-    courses = course_repo.get_by_type(db, course_type=course_type)
-    return courses
+@router.get("/type/{course_type}", response_model=PaginatedResponse[Course])
+def get_courses_by_type(course_type: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.get_by_type_paginated(db, course_type=course_type, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/mode/{mode}", response_model=List[Course])
-def get_courses_by_mode(mode: int, db: Session = Depends(get_db)):
-    courses = course_repo.get_by_mode(db, mode=mode)
-    return courses
+@router.get("/mode/{mode}", response_model=PaginatedResponse[Course])
+def get_courses_by_mode(mode: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.get_by_mode_paginated(db, mode=mode, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/profile/{profile}", response_model=List[Course])
-def get_courses_by_profile(profile: int, db: Session = Depends(get_db)):
-    courses = course_repo.get_by_profile(db, profile=profile)
-    return courses
+@router.get("/profile/{profile}", response_model=PaginatedResponse[Course])
+def get_courses_by_profile(profile: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.get_by_profile_paginated(db, profile=profile, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/active/", response_model=List[Course])
-def get_active_courses(current_date: date = None, db: Session = Depends(get_db)):
+@router.get("/active/", response_model=PaginatedResponse[Course])
+def get_active_courses(current_date: date = None, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
     if current_date is None:
         current_date = date.today()
-    courses = course_repo.get_active_courses(db, current_date=current_date)
-    return courses
+    courses, total_pages, total_count = course_repo.get_active_courses_paginated(db, current_date=current_date, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/date-range/", response_model=List[Course])
+@router.get("/date-range/", response_model=PaginatedResponse[Course])
 def get_courses_by_date_range(
     start_date: date, 
     end_date: date, 
+    page: int = 1, 
+    limit: int = 100, 
     db: Session = Depends(get_db)
 ):
     if start_date >= end_date:
@@ -136,11 +169,21 @@ def get_courses_by_date_range(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    courses = course_repo.get_by_date_range(db, start_date=start_date, end_date=end_date)
-    return courses
+    courses, total_pages, total_count = course_repo.get_by_date_range_paginated(db, start_date=start_date, end_date=end_date, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/search/{name}", response_model=List[Course])
-def search_courses(name: str, db: Session = Depends(get_db)):
-    courses = course_repo.search_by_name(db, name=name)
-    return courses
+@router.get("/search/{name}", response_model=PaginatedResponse[Course])
+def search_courses(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    courses, total_pages, total_count = course_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

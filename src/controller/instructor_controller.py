@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.instructor import Instructor, InstructorCreate, InstructorUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.instructor_repository import InstructorRepository
 
 router = APIRouter(prefix="/instructors", tags=["instructors"])
 instructor_repo = InstructorRepository()
 
 
-@router.get("/", response_model=List[Instructor])
-def get_instructors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    instructors = instructor_repo.get_multi(db, skip=skip, limit=limit)
-    return instructors
+@router.get("/", response_model=PaginatedResponse[Instructor])
+def get_instructors(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = instructor_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{instructor_id}", response_model=Instructor)
@@ -82,25 +88,45 @@ def delete_instructor(instructor_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Instructor deleted successfully"}
 
 
-@router.get("/worker/{worker_id}", response_model=List[Instructor])
-def get_instructors_by_worker(worker_id: UUID, db: Session = Depends(get_db)):
-    instructors = instructor_repo.get_by_worker(db, worker_id=worker_id)
-    return instructors
+@router.get("/worker/{worker_id}", response_model=PaginatedResponse[Instructor])
+def get_instructors_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = instructor_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/course/{course_id}", response_model=List[Instructor])
-def get_instructors_by_course(course_id: UUID, db: Session = Depends(get_db)):
-    instructors = instructor_repo.get_by_course(db, course_id=course_id)
-    return instructors
+@router.get("/course/{course_id}", response_model=PaginatedResponse[Instructor])
+def get_instructors_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = instructor_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/worker/{worker_id}/courses", response_model=List[Instructor])
-def get_courses_by_worker(worker_id: UUID, db: Session = Depends(get_db)):
-    instructors = instructor_repo.get_courses_by_worker(db, worker_id=worker_id)
-    return instructors
+@router.get("/worker/{worker_id}/courses", response_model=PaginatedResponse[Instructor])
+def get_courses_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = instructor_repo.get_courses_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/course/{course_id}/workers", response_model=List[Instructor])
-def get_workers_by_course(course_id: UUID, db: Session = Depends(get_db)):
-    instructors = instructor_repo.get_workers_by_course(db, course_id=course_id)
-    return instructors
+@router.get("/course/{course_id}/workers", response_model=PaginatedResponse[Instructor])
+def get_workers_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = instructor_repo.get_workers_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

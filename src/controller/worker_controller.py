@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.worker import Worker, WorkerCreate, WorkerUpdate, WorkerResponse
+from ..dto.pagination import PaginatedResponse
 from ..repository.worker_repository import WorkerRepository
 
 router = APIRouter(prefix="/workers", tags=["workers"])
 worker_repo = WorkerRepository()
 
 
-@router.get("/", response_model=List[Worker])
-def get_workers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    workers = worker_repo.get_multi(db, skip=skip, limit=limit)
-    return workers
+@router.get("/", response_model=PaginatedResponse[Worker])
+def get_workers(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    workers, total_pages, total_count = worker_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=workers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{worker_id}", response_model=Worker)
@@ -111,22 +117,37 @@ def delete_worker(worker_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Worker deleted successfully"}
 
 
-@router.get("/department/{department_id}", response_model=List[Worker])
-def get_workers_by_department(department_id: UUID, db: Session = Depends(get_db)):
-    workers = worker_repo.get_by_department(db, department_id=department_id)
-    return workers
+@router.get("/department/{department_id}", response_model=PaginatedResponse[Worker])
+def get_workers_by_department(department_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    workers, total_pages, total_count = worker_repo.get_by_department_paginated(db, department_id=department_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=workers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/role/{role}", response_model=List[Worker])
-def get_workers_by_role(role: int, db: Session = Depends(get_db)):
-    workers = worker_repo.get_by_role(db, role=role)
-    return workers
+@router.get("/role/{role}", response_model=PaginatedResponse[Worker])
+def get_workers_by_role(role: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    workers, total_pages, total_count = worker_repo.get_by_role_paginated(db, role=role, page=page, limit=limit)
+    return PaginatedResponse(
+        items=workers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/search/{name}", response_model=List[Worker])
-def search_workers(name: str, db: Session = Depends(get_db)):
-    workers = worker_repo.search_by_name(db, name=name)
-    return workers
+@router.get("/search/{name}", response_model=PaginatedResponse[Worker])
+def search_workers(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    workers, total_pages, total_count = worker_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
+    return PaginatedResponse(
+        items=workers,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/email/{email}", response_model=Worker)

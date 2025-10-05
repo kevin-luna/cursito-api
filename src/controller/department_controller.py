@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.department import Department, DepartmentCreate, DepartmentUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.department_repository import DepartmentRepository
 
 router = APIRouter(prefix="/departments", tags=["departments"])
 department_repo = DepartmentRepository()
 
 
-@router.get("/", response_model=List[Department])
-def get_departments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    departments = department_repo.get_multi(db, skip=skip, limit=limit)
-    return departments
+@router.get("/", response_model=PaginatedResponse[Department])
+def get_departments(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    departments, total_pages, total_count = department_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=departments,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{department_id}", response_model=Department)
@@ -76,7 +82,12 @@ def delete_department(department_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Department deleted successfully"}
 
 
-@router.get("/search/{name}", response_model=List[Department])
-def search_departments(name: str, db: Session = Depends(get_db)):
-    departments = department_repo.search_by_name(db, name=name)
-    return departments
+@router.get("/search/{name}", response_model=PaginatedResponse[Department])
+def search_departments(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    departments, total_pages, total_count = department_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
+    return PaginatedResponse(
+        items=departments,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

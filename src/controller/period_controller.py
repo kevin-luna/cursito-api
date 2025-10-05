@@ -6,16 +6,22 @@ from datetime import date
 
 from ..database import get_db
 from ..dto.period import Period, PeriodCreate, PeriodUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.period_repository import PeriodRepository
 
 router = APIRouter(prefix="/periods", tags=["periods"])
 period_repo = PeriodRepository()
 
 
-@router.get("/", response_model=List[Period])
-def get_periods(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    periods = period_repo.get_multi(db, skip=skip, limit=limit)
-    return periods
+@router.get("/", response_model=PaginatedResponse[Period])
+def get_periods(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    periods, total_pages, total_count = period_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=periods,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{period_id}", response_model=Period)
@@ -94,18 +100,25 @@ def delete_period(period_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Period deleted successfully"}
 
 
-@router.get("/active/", response_model=List[Period])
-def get_active_periods(current_date: date = None, db: Session = Depends(get_db)):
+@router.get("/active/", response_model=PaginatedResponse[Period])
+def get_active_periods(current_date: date = None, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
     if current_date is None:
         current_date = date.today()
-    periods = period_repo.get_active_periods(db, current_date=current_date)
-    return periods
+    periods, total_pages, total_count = period_repo.get_active_periods_paginated(db, current_date=current_date, page=page, limit=limit)
+    return PaginatedResponse(
+        items=periods,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/date-range/", response_model=List[Period])
+@router.get("/date-range/", response_model=PaginatedResponse[Period])
 def get_periods_by_date_range(
     start_date: date, 
     end_date: date, 
+    page: int = 1, 
+    limit: int = 100, 
     db: Session = Depends(get_db)
 ):
     if start_date >= end_date:
@@ -113,5 +126,10 @@ def get_periods_by_date_range(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    periods = period_repo.get_by_date_range(db, start_date=start_date, end_date=end_date)
-    return periods
+    periods, total_pages, total_count = period_repo.get_by_date_range_paginated(db, start_date=start_date, end_date=end_date, page=page, limit=limit)
+    return PaginatedResponse(
+        items=periods,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

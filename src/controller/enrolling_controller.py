@@ -6,16 +6,22 @@ from decimal import Decimal
 
 from ..database import get_db
 from ..dto.enrolling import Enrolling, EnrollingCreate, EnrollingUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.enrolling_repository import EnrollingRepository
 
 router = APIRouter(prefix="/enrollings", tags=["enrollings"])
 enrolling_repo = EnrollingRepository()
 
 
-@router.get("/", response_model=List[Enrolling])
-def get_enrollings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    enrollings = enrolling_repo.get_multi(db, skip=skip, limit=limit)
-    return enrollings
+@router.get("/", response_model=PaginatedResponse[Enrolling])
+def get_enrollings(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    enrollings, total_pages, total_count = enrolling_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{enrolling_id}", response_model=Enrolling)
@@ -83,22 +89,34 @@ def delete_enrolling(enrolling_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Enrolling deleted successfully"}
 
 
-@router.get("/worker/{worker_id}", response_model=List[Enrolling])
-def get_enrollings_by_worker(worker_id: UUID, db: Session = Depends(get_db)):
-    enrollings = enrolling_repo.get_by_worker(db, worker_id=worker_id)
-    return enrollings
+@router.get("/worker/{worker_id}", response_model=PaginatedResponse[Enrolling])
+def get_enrollings_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    enrollings, total_pages, total_count = enrolling_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/course/{course_id}", response_model=List[Enrolling])
-def get_enrollings_by_course(course_id: UUID, db: Session = Depends(get_db)):
-    enrollings = enrolling_repo.get_by_course(db, course_id=course_id)
-    return enrollings
+@router.get("/course/{course_id}", response_model=PaginatedResponse[Enrolling])
+def get_enrollings_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    enrollings, total_pages, total_count = enrolling_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/grade-range/", response_model=List[Enrolling])
+@router.get("/grade-range/", response_model=PaginatedResponse[Enrolling])
 def get_enrollings_by_grade_range(
     min_grade: Decimal, 
     max_grade: Decimal, 
+    page: int = 1, 
+    limit: int = 100, 
     db: Session = Depends(get_db)
 ):
     if min_grade > max_grade:
@@ -106,17 +124,32 @@ def get_enrollings_by_grade_range(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Min grade must be less than or equal to max grade"
         )
-    enrollings = enrolling_repo.get_by_grade_range(db, min_grade=min_grade, max_grade=max_grade)
-    return enrollings
+    enrollings, total_pages, total_count = enrolling_repo.get_by_grade_range_paginated(db, min_grade=min_grade, max_grade=max_grade, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/course/{course_id}/enrolled", response_model=List[Enrolling])
-def get_enrolled_workers(course_id: UUID, db: Session = Depends(get_db)):
-    enrollings = enrolling_repo.get_enrolled_workers(db, course_id=course_id)
-    return enrollings
+@router.get("/course/{course_id}/enrolled", response_model=PaginatedResponse[Enrolling])
+def get_enrolled_workers(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    enrollings, total_pages, total_count = enrolling_repo.get_enrolled_workers_paginated(db, course_id=course_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/worker/{worker_id}/enrollments", response_model=List[Enrolling])
-def get_worker_enrollments(worker_id: UUID, db: Session = Depends(get_db)):
-    enrollings = enrolling_repo.get_worker_enrollments(db, worker_id=worker_id)
-    return enrollings
+@router.get("/worker/{worker_id}/enrollments", response_model=PaginatedResponse[Enrolling])
+def get_worker_enrollments(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    enrollings, total_pages, total_count = enrolling_repo.get_worker_enrollments_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=enrollings,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

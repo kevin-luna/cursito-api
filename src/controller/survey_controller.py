@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.survey import Survey, SurveyCreate, SurveyUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.survey_repository import SurveyRepository
 
 router = APIRouter(prefix="/surveys", tags=["surveys"])
 survey_repo = SurveyRepository()
 
 
-@router.get("/", response_model=List[Survey])
-def get_surveys(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    surveys = survey_repo.get_multi(db, skip=skip, limit=limit)
-    return surveys
+@router.get("/", response_model=PaginatedResponse[Survey])
+def get_surveys(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    surveys, total_pages, total_count = survey_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=surveys,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{survey_id}", response_model=Survey)
@@ -76,7 +82,12 @@ def delete_survey(survey_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Survey deleted successfully"}
 
 
-@router.get("/search/{name}", response_model=List[Survey])
-def search_surveys(name: str, db: Session = Depends(get_db)):
-    surveys = survey_repo.search_by_name(db, name=name)
-    return surveys
+@router.get("/search/{name}", response_model=PaginatedResponse[Survey])
+def search_surveys(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    surveys, total_pages, total_count = survey_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
+    return PaginatedResponse(
+        items=surveys,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

@@ -5,16 +5,22 @@ from uuid import UUID
 
 from ..database import get_db
 from ..dto.question import Question, QuestionCreate, QuestionUpdate
+from ..dto.pagination import PaginatedResponse
 from ..repository.question_repository import QuestionRepository
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 question_repo = QuestionRepository()
 
 
-@router.get("/", response_model=List[Question])
-def get_questions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    questions = question_repo.get_multi(db, skip=skip, limit=limit)
-    return questions
+@router.get("/", response_model=PaginatedResponse[Question])
+def get_questions(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    questions, total_pages, total_count = question_repo.get_multi_paginated(db, page=page, limit=limit)
+    return PaginatedResponse(
+        items=questions,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
 @router.get("/{question_id}", response_model=Question)
@@ -78,13 +84,23 @@ def delete_question(question_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Question deleted successfully"}
 
 
-@router.get("/survey/{survey_id}", response_model=List[Question])
-def get_questions_by_survey(survey_id: UUID, db: Session = Depends(get_db)):
-    questions = question_repo.get_by_survey(db, survey_id=survey_id)
-    return questions
+@router.get("/survey/{survey_id}", response_model=PaginatedResponse[Question])
+def get_questions_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    questions, total_pages, total_count = question_repo.get_by_survey_paginated(db, survey_id=survey_id, page=page, limit=limit)
+    return PaginatedResponse(
+        items=questions,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
 
 
-@router.get("/search/{text}", response_model=List[Question])
-def search_questions(text: str, db: Session = Depends(get_db)):
-    questions = question_repo.search_by_text(db, text=text)
-    return questions
+@router.get("/search/{text}", response_model=PaginatedResponse[Question])
+def search_questions(text: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    questions, total_pages, total_count = question_repo.search_by_text_paginated(db, text=text, page=page, limit=limit)
+    return PaginatedResponse(
+        items=questions,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
