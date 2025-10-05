@@ -1,0 +1,153 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from uuid import UUID
+from datetime import date
+
+from ..database import get_db
+from ..dto.attendance import Attendance, AttendanceCreate, AttendanceUpdate
+from ..repository.attendance_repository import AttendanceRepository
+
+router = APIRouter(prefix="/attendances", tags=["attendances"])
+attendance_repo = AttendanceRepository()
+
+
+@router.get("/", response_model=List[Attendance])
+def get_attendances(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    attendances = attendance_repo.get_multi(db, skip=skip, limit=limit)
+    return attendances
+
+
+@router.get("/{attendance_id}", response_model=Attendance)
+def get_attendance(attendance_id: UUID, db: Session = Depends(get_db)):
+    attendance = attendance_repo.get(db, id=attendance_id)
+    if not attendance:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Attendance not found"
+        )
+    return attendance
+
+
+@router.post("/", response_model=Attendance, status_code=status.HTTP_201_CREATED)
+def create_attendance(attendance: AttendanceCreate, db: Session = Depends(get_db)):
+    # Check if attendance already exists for this worker, course, and date
+    existing_attendance = attendance_repo.get_by_worker_course_and_date(
+        db, 
+        worker_id=attendance.worker_id, 
+        course_id=attendance.course_id, 
+        attendance_date=attendance.date
+    )
+    if existing_attendance:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Attendance already recorded for this worker, course, and date"
+        )
+    
+    return attendance_repo.create(db, obj_in=attendance)
+
+
+@router.put("/{attendance_id}", response_model=Attendance)
+def update_attendance(
+    attendance_id: UUID, 
+    attendance_update: AttendanceUpdate, 
+    db: Session = Depends(get_db)
+):
+    attendance = attendance_repo.get(db, id=attendance_id)
+    if not attendance:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Attendance not found"
+        )
+    
+    # Check if new assignment conflicts with existing attendance
+    worker_id = attendance_update.worker_id or attendance.worker_id
+    course_id = attendance_update.course_id or attendance.course_id
+    attendance_date = attendance_update.date or attendance.date
+    existing_attendance = attendance_repo.get_by_worker_course_and_date(
+        db, 
+        worker_id=worker_id, 
+        course_id=course_id, 
+        attendance_date=attendance_date
+    )
+    if existing_attendance and existing_attendance.id != attendance_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Attendance already recorded for this worker, course, and date"
+        )
+    
+    return attendance_repo.update(db, db_obj=attendance, obj_in=attendance_update)
+
+
+@router.delete("/{attendance_id}")
+def delete_attendance(attendance_id: UUID, db: Session = Depends(get_db)):
+    attendance = attendance_repo.delete(db, id=attendance_id)
+    if not attendance:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Attendance not found"
+        )
+    return {"message": "Attendance deleted successfully"}
+
+
+@router.get("/worker/{worker_id}", response_model=List[Attendance])
+def get_attendances_by_worker(worker_id: UUID, db: Session = Depends(get_db)):
+    attendances = attendance_repo.get_by_worker(db, worker_id=worker_id)
+    return attendances
+
+
+@router.get("/course/{course_id}", response_model=List[Attendance])
+def get_attendances_by_course(course_id: UUID, db: Session = Depends(get_db)):
+    attendances = attendance_repo.get_by_course(db, course_id=course_id)
+    return attendances
+
+
+@router.get("/worker/{worker_id}/course/{course_id}", response_model=List[Attendance])
+def get_attendances_by_worker_and_course(
+    worker_id: UUID, 
+    course_id: UUID, 
+    db: Session = Depends(get_db)
+):
+    attendances = attendance_repo.get_by_worker_and_course(db, worker_id=worker_id, course_id=course_id)
+    return attendances
+
+
+@router.get("/date/{attendance_date}", response_model=List[Attendance])
+def get_attendances_by_date(attendance_date: date, db: Session = Depends(get_db)):
+    attendances = attendance_repo.get_by_date(db, attendance_date=attendance_date)
+    return attendances
+
+
+@router.get("/worker/{worker_id}/date/{attendance_date}", response_model=List[Attendance])
+def get_attendances_by_worker_and_date(
+    worker_id: UUID, 
+    attendance_date: date, 
+    db: Session = Depends(get_db)
+):
+    attendances = attendance_repo.get_by_worker_and_date(db, worker_id=worker_id, attendance_date=attendance_date)
+    return attendances
+
+
+@router.get("/course/{course_id}/date/{attendance_date}", response_model=List[Attendance])
+def get_attendances_by_course_and_date(
+    course_id: UUID, 
+    attendance_date: date, 
+    db: Session = Depends(get_db)
+):
+    attendances = attendance_repo.get_by_course_and_date(db, course_id=course_id, attendance_date=attendance_date)
+    return attendances
+
+
+@router.get("/date-range/", response_model=List[Attendance])
+def get_attendances_by_date_range(
+    start_date: date, 
+    end_date: date, 
+    db: Session = Depends(get_db)
+):
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Start date must be before or equal to end date"
+        )
+    attendances = attendance_repo.get_date_range(db, start_date=start_date, end_date=end_date)
+    return attendances
