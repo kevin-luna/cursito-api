@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import date, time
 
@@ -17,6 +17,7 @@ class CourseBase(BaseModel):
     profile: int  # 0 = formacion, 1 = actualización docente
     goal: str
     details: Optional[str] = None
+    instructors: Optional[List[UUID]] = None
 
 
 class CourseCreate(CourseBase):

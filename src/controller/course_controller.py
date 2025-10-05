@@ -8,9 +8,11 @@ from ..database import get_db
 from ..dto.course import Course, CourseCreate, CourseUpdate
 from ..dto.pagination import PaginatedResponse
 from ..repository.course_repository import CourseRepository
+from ..repository.instructor_repository import InstructorRepository
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 course_repo = CourseRepository()
+instructor_repo = InstructorRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Course])
@@ -37,6 +39,38 @@ def get_course(course_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=Course, status_code=status.HTTP_201_CREATED)
 def create_course(course: CourseCreate, db: Session = Depends(get_db)):
+    #Validate instructors
+    instructors_count = len(course.instructors)
+    if instructors_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A course must have at least 1 instructor"
+        )
+
+    if instructors_count > 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A course can only have 2 instructors"
+        )
+
+    if not instructor_repo.check_instructor_list(db, course.instructors):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid instructors"
+        )
+
+    if not instructor_repo.check_availability(db, course.instructors[0], course.start_date, course.end_date):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Instructor is not available"
+        )
+    
+    if not instructor_repo.check_availability(db, course.instructors[1], course.start_date, course.end_date):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Instructor is not available"
+        )
+
     # Validate date range
     if course.start_date >= course.end_date:
         raise HTTPException(

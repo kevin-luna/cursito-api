@@ -1,10 +1,14 @@
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
+from sqlalchemy import exists
 from uuid import UUID
 import math
 from ..model.worker import Worker
+from ..model.instructor import Instructor
+from ..model.course import Course
 from ..dto.worker import WorkerCreate, WorkerUpdate
 from .base import BaseRepository
+from datetime import date, time
 
 
 class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
@@ -32,6 +36,27 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
             Worker.fathers_surname.ilike(f"%{name}%") |
             Worker.mother_surname.ilike(f"%{name}%")
         ).all()
+
+    def check_worker_list(self, db: Session, worker_list: List[UUID]) -> bool:
+        return db.query(Worker).filter(Worker.id.in_(worker_list)).count() == len(worker_list)
+
+    def get_by_availability_paginated(self, db: Session, start_date: date, end_date: date, start_time: time, end_time: time, page: int = 1, limit: int = 100) -> Tuple[List[Worker], int, int]:
+        offset = (page - 1) * limit
+        subquery = (
+            db.query(Instructor)
+            .join(Course)
+            .filter(
+                Instructor.worker_id == Worker.id,
+                Course.start_date < end_date,
+                Course.end_date > start_date,
+                Course.start_time < end_time,
+                Course.end_time > start_time
+            )
+        )
+        total_count = db.query(Worker).filter(~exists(subquery)).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Worker).filter(~exists(subquery)).offset(offset).limit(limit).all()
+        return items, total_pages, total_count
 
     def get_by_department_paginated(self, db: Session, department_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Worker], int, int]:
         offset = (page - 1) * limit

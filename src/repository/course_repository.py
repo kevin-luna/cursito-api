@@ -6,11 +6,24 @@ import math
 from ..model.course import Course
 from ..dto.course import CourseCreate, CourseUpdate
 from .base import BaseRepository
+from ..model.instructor import Instructor
 
 
 class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
     def __init__(self):
         super().__init__(Course)
+
+    def create(self, db: Session, course: CourseCreate, instructors: List[UUID]) -> Course:
+        course_obj = Course(**course.model_dump())
+        db.add(course_obj)
+        course_obj.instructors = []
+        for instructor in instructors:
+            instructor_obj = Instructor(worker_id=instructor, course_id=course_obj.id)
+            db.add(instructor_obj)
+            course_obj.instructors.append(instructor_obj)
+        db.commit()
+        db.refresh(course_obj)
+        return course_obj
 
     def get_by_period(self, db: Session, period_id: UUID) -> List[Course]:
         return db.query(Course).filter(Course.period_id == period_id).all()
