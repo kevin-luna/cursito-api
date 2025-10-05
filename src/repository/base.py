@@ -39,7 +39,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return items, total_pages, total_count
 
     def create(self, db: Session, obj_in: CreateSchemaType) -> ModelType:
-        obj_data = obj_in.dict()
+        obj_data = obj_in.model_dump()
         db_obj = self.model(**obj_data)
         db.add(db_obj)
         db.commit()
@@ -47,7 +47,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def update(self, db: Session, db_obj: ModelType, obj_in: UpdateSchemaType) -> ModelType:
-        obj_data = obj_in.dict(exclude_unset=True)
+        obj_data = obj_in.model_dump(exclude_unset=True)
         for field, value in obj_data.items():
             setattr(db_obj, field, value)
         db.add(db_obj)
