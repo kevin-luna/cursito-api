@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 
 # Import all controllers
+from .controller.auth_controller import router as auth_router
 from .controller.department_controller import router as department_router
 from .controller.period_controller import router as period_router
 from .controller.survey_controller import router as survey_router
@@ -36,6 +37,7 @@ app.add_middleware(
 )
 
 # Include all routers
+app.include_router(auth_router)
 app.include_router(department_router)
 app.include_router(period_router)
 app.include_router(survey_router)

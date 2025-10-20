@@ -5,3 +5,6 @@ psycopg2-binary
 pydantic
 python-multipart
 python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
