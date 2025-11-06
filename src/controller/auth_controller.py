@@ -28,10 +28,10 @@ async def login(
 
     Retorna un token JWT válido por 30 minutos (configurable)
     """
-    worker_repo = WorkerRepository(db)
+    worker_repo = WorkerRepository()
 
     # Buscar el worker por email
-    worker = worker_repo.get_by_email(login_data.email)
+    worker = worker_repo.get_by_email(db, login_data.email)
 
     if not worker:
         raise HTTPException(
@@ -65,7 +65,7 @@ async def login(
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES,
         worker_id=str(worker.id),
         email=worker.email,
-        role=worker.role,
+        role=str(worker.role),
         department_id=str(worker.department_id) if worker.department_id else None
     )
 
@@ -116,12 +116,12 @@ async def get_current_user_info(
         "id": str(current_worker.id),
         "email": current_worker.email,
         "name": current_worker.name,
-        "father_lastname": current_worker.father_lastname,
-        "mother_lastname": current_worker.mother_lastname,
+        "father_lastname": current_worker.fathers_surname,
+        "mother_lastname": current_worker.mother_surname,
         "role": current_worker.role,
         "department_id": str(current_worker.department_id) if current_worker.department_id else None,
         "rfc": current_worker.rfc,
         "curp": current_worker.curp,
         "sex": current_worker.sex,
-        "phone": current_worker.phone
+        "phone": current_worker.telephone
     }

@@ -49,8 +49,8 @@ async def get_current_worker(
         )
 
     # Buscar el worker en la base de datos
-    worker_repo = WorkerRepository(db)
-    worker = worker_repo.get_by_id(worker_id)
+    worker_repo = WorkerRepository()
+    worker = worker_repo.get_by_id(db, worker_id)
 
     if worker is None:
         raise HTTPException(

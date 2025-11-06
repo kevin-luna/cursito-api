@@ -15,6 +15,9 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
     def __init__(self):
         super().__init__(Worker)
 
+    def get_by_id(self, db: Session, id: UUID):
+        return db.query(Worker).get(id)
+
     def get_by_email(self, db: Session, email: str) -> Optional[Worker]:
         return db.query(Worker).filter(Worker.email == email).first()
 

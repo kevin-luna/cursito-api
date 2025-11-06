@@ -19,15 +19,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verifica si una contraseña en texto plano coincide con el hash
+    ⚠️ MODO INSEGURO: Comparación directa sin hash (solo para desarrollo)
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Modo inseguro: comparación directa de texto plano
+    return plain_password == hashed_password
+
+    # Modo seguro (comentado temporalmente):
+    # return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """
     Genera el hash de una contraseña
+    ⚠️ MODO INSEGURO: Retorna texto plano sin hashear (solo para desarrollo)
     """
-    return pwd_context.hash(password)
+    # Modo inseguro: retornar la contraseña sin hashear
+    return password
+
+    # Modo seguro (comentado temporalmente):
+    # return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
