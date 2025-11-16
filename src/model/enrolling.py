@@ -9,8 +9,8 @@ class Enrolling(Base):
     __tablename__ = "enrollings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    worker_id = Column(UUID(as_uuid=True), ForeignKey("worker.id"), nullable=False)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("course.id"), nullable=False)
+    worker_id = Column(UUID(as_uuid=True), ForeignKey("workers.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     final_grade = Column(Numeric(5, 2))
 
     # Relationships

@@ -6,10 +6,10 @@ import uuid
 
 
 class Worker(Base):
-    __tablename__ = "worker"
+    __tablename__ = "workers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    department_id = Column(UUID(as_uuid=True), ForeignKey("department.id"), nullable=False)
+    department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=False)
     rfc = Column(String(13), nullable=False, unique=True)
     curp = Column(String(18), nullable=False, unique=True)
     sex = Column(SmallInteger, nullable=False)  # 0 = mujer, 1 = hombre
@@ -19,7 +19,7 @@ class Worker(Base):
     name = Column(String(45), nullable=False)
     fathers_surname = Column(String(40), nullable=False)
     mother_surname = Column(String(40))
-    role = Column(SmallInteger, nullable=False)  # 0 = docente, 1 = jefe de departamento
+    position = Column(SmallInteger, nullable=False)  # 0 = docente, 1 = jefe de departamento
 
     # Relationships
     department = relationship("Department", back_populates="workers")

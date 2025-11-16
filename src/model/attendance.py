@@ -9,9 +9,9 @@ class Attendance(Base):
     __tablename__ = "attendances"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    worker_id = Column(UUID(as_uuid=True), ForeignKey("worker.id"), nullable=False)
-    course_id = Column(UUID(as_uuid=True), ForeignKey("course.id"), nullable=False)
-    date = Column(Date, nullable=False)
+    worker_id = Column(UUID(as_uuid=True), ForeignKey("workers.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
+    attendance_date = Column(Date, nullable=False)
 
     # Relationships
     worker = relationship("Worker", back_populates="attendances")
@@ -19,5 +19,5 @@ class Attendance(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('worker_id', 'course_id', 'date', name='unique_worker_course_date'),
+        UniqueConstraint('worker_id', 'course_id', 'attendance_date', name='unique_worker_course_date'),
     )

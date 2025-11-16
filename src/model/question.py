@@ -11,7 +11,7 @@ class Question(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     survey_id = Column(UUID(as_uuid=True), ForeignKey("surveys.id"), nullable=False)
     question = Column(String(100), nullable=False)
-    position = Column(SmallInteger, nullable=False)
+    question_order = Column(SmallInteger, nullable=False)
 
     # Relationships
     survey = relationship("Survey", back_populates="questions")

@@ -6,19 +6,19 @@ import uuid
 
 
 class Course(Base):
-    __tablename__ = "course"
+    __tablename__ = "courses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    period_id = Column(UUID(as_uuid=True), ForeignKey("period.id"), nullable=False)
+    period_id = Column(UUID(as_uuid=True), ForeignKey("periods.id"), nullable=False)
     target = Column(String(255), nullable=False)
     name = Column(String(150), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
-    type = Column(SmallInteger, nullable=False)  # 0 = diplomado, 1 = taller
-    mode = Column(SmallInteger, nullable=False)  # 0 = virtual, 1 = presencial
-    profile = Column(SmallInteger, nullable=False)  # 0 = formacion, 1 = actualización docente
+    course_type = Column(SmallInteger, nullable=False)  # 0 = diplomado, 1 = taller
+    modality = Column(SmallInteger, nullable=False)  # 0 = virtual, 1 = presencial
+    course_profile = Column(SmallInteger, nullable=False)  # 0 = formacion, 1 = actualización docente
     goal = Column(Text, nullable=False)
     details = Column(Text)
 
