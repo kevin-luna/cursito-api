@@ -52,7 +52,7 @@ async def login(
     token_data = {
         "sub": str(worker.id),
         "email": worker.email,
-        "role": worker.role,
+        "position": worker.position,
         "department_id": str(worker.department_id) if worker.department_id else None
     }
 
@@ -65,7 +65,7 @@ async def login(
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES,
         worker_id=str(worker.id),
         email=worker.email,
-        role=str(worker.role),
+        position=str(worker.position),
         department_id=str(worker.department_id) if worker.department_id else None
     )
 
@@ -116,12 +116,12 @@ async def get_current_user_info(
         "id": str(current_worker.id),
         "email": current_worker.email,
         "name": current_worker.name,
-        "father_lastname": current_worker.fathers_surname,
-        "mother_lastname": current_worker.mother_surname,
-        "role": current_worker.role,
+        "father_surname": current_worker.father_surname,
+        "mother_surname": current_worker.mother_surname,
+        "position": current_worker.position,
         "department_id": str(current_worker.department_id) if current_worker.department_id else None,
         "rfc": current_worker.rfc,
         "curp": current_worker.curp,
         "sex": current_worker.sex,
-        "phone": current_worker.telephone
+        "telephone": current_worker.telephone
     }

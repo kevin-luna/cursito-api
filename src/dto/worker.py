@@ -11,9 +11,9 @@ class WorkerBase(BaseModel):
     telephone: Optional[str] = None
     email: EmailStr
     name: str
-    fathers_surname: str
+    father_surname: str
     mother_surname: Optional[str] = None
-    role: int  # 0 = docente, 1 = jefe de departamento
+    position: int  # 0 = docente, 1 = jefe de departamento
 
 
 class WorkerCreate(WorkerBase):
@@ -29,9 +29,9 @@ class WorkerUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     name: Optional[str] = None
-    fathers_surname: Optional[str] = None
+    father_surname: Optional[str] = None
     mother_surname: Optional[str] = None
-    role: Optional[int] = None
+    position: Optional[int] = None
 
 
 class Worker(WorkerBase):

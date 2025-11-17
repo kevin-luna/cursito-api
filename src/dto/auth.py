@@ -28,7 +28,7 @@ class TokenResponse(BaseModel):
     expires_in: int = Field(..., description="Tiempo de expiración en minutos")
     worker_id: str = Field(..., description="ID del trabajador autenticado")
     email: str = Field(..., description="Email del trabajador")
-    role: str = Field(..., description="Rol del trabajador")
+    position: str = Field(..., description="Posición del trabajador")
     department_id: Optional[str] = Field(None, description="ID del departamento")
 
     model_config = {
@@ -52,7 +52,7 @@ class TokenPayload(BaseModel):
     """
     sub: str  # worker_id
     email: str
-    role: str
+    position: str
     department_id: Optional[str] = None
     exp: Optional[int] = None
 

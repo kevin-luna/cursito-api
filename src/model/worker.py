@@ -17,7 +17,7 @@ class Worker(Base):
     email = Column(String(64), nullable=False, unique=True)
     password = Column(String(255), nullable=False)  # Almacenar como hash
     name = Column(String(45), nullable=False)
-    fathers_surname = Column(String(40), nullable=False)
+    father_surname = Column(String(40), nullable=False)
     mother_surname = Column(String(40))
     position = Column(SmallInteger, nullable=False)  # 0 = docente, 1 = jefe de departamento
 

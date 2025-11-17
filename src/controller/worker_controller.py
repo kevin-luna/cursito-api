@@ -128,9 +128,9 @@ def get_workers_by_department(department_id: UUID, page: int = 1, limit: int = 1
     )
 
 
-@router.get("/role/{role}", response_model=PaginatedResponse[Worker])
-def get_workers_by_role(role: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
-    workers, total_pages, total_count = worker_repo.get_by_role_paginated(db, role=role, page=page, limit=limit)
+@router.get("/position/{position}", response_model=PaginatedResponse[Worker])
+def get_workers_by_position(position: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+    workers, total_pages, total_count = worker_repo.get_by_position_paginated(db, position=position, page=page, limit=limit)
     return PaginatedResponse(
         items=workers,
         total_pages=total_pages,
