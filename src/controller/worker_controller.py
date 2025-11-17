@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ worker_repo = WorkerRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Worker])
-def get_workers(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_workers(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     workers, total_pages, total_count = worker_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=workers,
@@ -118,7 +119,7 @@ def delete_worker(worker_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/department/{department_id}", response_model=PaginatedResponse[Worker])
-def get_workers_by_department(department_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_workers_by_department(department_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     workers, total_pages, total_count = worker_repo.get_by_department_paginated(db, department_id=department_id, page=page, limit=limit)
     return PaginatedResponse(
         items=workers,
@@ -129,7 +130,7 @@ def get_workers_by_department(department_id: UUID, page: int = 1, limit: int = 1
 
 
 @router.get("/position/{position}", response_model=PaginatedResponse[Worker])
-def get_workers_by_position(position: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_workers_by_position(position: int, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     workers, total_pages, total_count = worker_repo.get_by_position_paginated(db, position=position, page=page, limit=limit)
     return PaginatedResponse(
         items=workers,
@@ -140,7 +141,7 @@ def get_workers_by_position(position: int, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/search/{name}", response_model=PaginatedResponse[Worker])
-def search_workers(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_workers(name: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     workers, total_pages, total_count = worker_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
     return PaginatedResponse(
         items=workers,

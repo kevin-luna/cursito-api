@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ answer_repo = AnswerRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Answer])
-def get_answers(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_answers(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,
@@ -96,7 +97,7 @@ def delete_answer(answer_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/worker/{worker_id}", response_model=PaginatedResponse[Answer])
-def get_answers_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_answers_by_worker(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,
@@ -107,7 +108,7 @@ def get_answers_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/course/{course_id}", response_model=PaginatedResponse[Answer])
-def get_answers_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_answers_by_course(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,
@@ -118,7 +119,7 @@ def get_answers_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/question/{question_id}", response_model=PaginatedResponse[Answer])
-def get_answers_by_question(question_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_answers_by_question(question_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.get_by_question_paginated(db, question_id=question_id, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,
@@ -130,10 +131,10 @@ def get_answers_by_question(question_id: UUID, page: int = 1, limit: int = 100, 
 
 @router.get("/worker/{worker_id}/course/{course_id}", response_model=PaginatedResponse[Answer])
 def get_answers_by_worker_and_course(
-    worker_id: UUID, 
-    course_id: UUID, 
-    page: int = 1, 
-    limit: int = 100, 
+    worker_id: UUID,
+    course_id: UUID,
+    page: PositiveInt = 1,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     answers, total_pages, total_count = answer_repo.get_by_worker_and_course_paginated(db, worker_id=worker_id, course_id=course_id, page=page, limit=limit)
@@ -146,7 +147,7 @@ def get_answers_by_worker_and_course(
 
 
 @router.get("/survey/{survey_id}", response_model=PaginatedResponse[Answer])
-def get_answers_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_answers_by_survey(survey_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.get_by_survey_paginated(db, survey_id=survey_id, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,
@@ -157,7 +158,7 @@ def get_answers_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/search/{value}", response_model=PaginatedResponse[Answer])
-def search_answers(value: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_answers(value: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     answers, total_pages, total_count = answer_repo.search_by_value_paginated(db, value=value, page=page, limit=limit)
     return PaginatedResponse(
         items=answers,

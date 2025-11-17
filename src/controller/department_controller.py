@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ department_repo = DepartmentRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Department])
-def get_departments(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_departments(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     departments, total_pages, total_count = department_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=departments,
@@ -83,7 +84,7 @@ def delete_department(department_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/search/{name}", response_model=PaginatedResponse[Department])
-def search_departments(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_departments(name: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     departments, total_pages, total_count = department_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
     return PaginatedResponse(
         items=departments,

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ instructor_repo = InstructorRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Instructor])
-def get_instructors(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_instructors(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     instructors, total_pages, total_count = instructor_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=instructors,
@@ -89,7 +90,7 @@ def delete_instructor(instructor_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/worker/{worker_id}", response_model=PaginatedResponse[Instructor])
-def get_instructors_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_instructors_by_worker(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     instructors, total_pages, total_count = instructor_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
     return PaginatedResponse(
         items=instructors,
@@ -100,7 +101,7 @@ def get_instructors_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, 
 
 
 @router.get("/course/{course_id}", response_model=PaginatedResponse[Instructor])
-def get_instructors_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_instructors_by_course(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     instructors, total_pages, total_count = instructor_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
     return PaginatedResponse(
         items=instructors,
@@ -111,7 +112,7 @@ def get_instructors_by_course(course_id: UUID, page: int = 1, limit: int = 100, 
 
 
 @router.get("/worker/{worker_id}/courses", response_model=PaginatedResponse[Instructor])
-def get_courses_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses_by_worker(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     instructors, total_pages, total_count = instructor_repo.get_courses_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
     return PaginatedResponse(
         items=instructors,
@@ -122,7 +123,7 @@ def get_courses_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/course/{course_id}/workers", response_model=PaginatedResponse[Instructor])
-def get_workers_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_workers_by_course(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     instructors, total_pages, total_count = instructor_repo.get_workers_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
     return PaginatedResponse(
         items=instructors,

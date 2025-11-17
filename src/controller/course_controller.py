@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -16,7 +17,7 @@ instructor_repo = InstructorRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Course])
-def get_courses(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
@@ -134,7 +135,7 @@ def delete_course(course_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/period/{period_id}", response_model=PaginatedResponse[Course])
-def get_courses_by_period(period_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses_by_period(period_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.get_by_period_paginated(db, period_id=period_id, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
@@ -145,7 +146,7 @@ def get_courses_by_period(period_id: UUID, page: int = 1, limit: int = 100, db: 
 
 
 @router.get("/type/{course_type}", response_model=PaginatedResponse[Course])
-def get_courses_by_type(course_type: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses_by_type(course_type: int, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.get_by_type_paginated(db, course_type=course_type, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
@@ -156,7 +157,7 @@ def get_courses_by_type(course_type: int, page: int = 1, limit: int = 100, db: S
 
 
 @router.get("/mode/{mode}", response_model=PaginatedResponse[Course])
-def get_courses_by_mode(mode: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses_by_mode(mode: int, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.get_by_mode_paginated(db, mode=mode, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
@@ -167,7 +168,7 @@ def get_courses_by_mode(mode: int, page: int = 1, limit: int = 100, db: Session 
 
 
 @router.get("/profile/{profile}", response_model=PaginatedResponse[Course])
-def get_courses_by_profile(profile: int, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_courses_by_profile(profile: int, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.get_by_profile_paginated(db, profile=profile, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
@@ -178,7 +179,7 @@ def get_courses_by_profile(profile: int, page: int = 1, limit: int = 100, db: Se
 
 
 @router.get("/active/", response_model=PaginatedResponse[Course])
-def get_active_courses(current_date: date = None, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_active_courses(current_date: date = None, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     if current_date is None:
         current_date = date.today()
     courses, total_pages, total_count = course_repo.get_active_courses_paginated(db, current_date=current_date, page=page, limit=limit)
@@ -192,10 +193,10 @@ def get_active_courses(current_date: date = None, page: int = 1, limit: int = 10
 
 @router.get("/date-range/", response_model=PaginatedResponse[Course])
 def get_courses_by_date_range(
-    start_date: date, 
-    end_date: date, 
-    page: int = 1, 
-    limit: int = 100, 
+    start_date: date,
+    end_date: date,
+    page: PositiveInt = 1,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     if start_date >= end_date:
@@ -213,7 +214,7 @@ def get_courses_by_date_range(
 
 
 @router.get("/search/{name}", response_model=PaginatedResponse[Course])
-def search_courses(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_courses(name: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     courses, total_pages, total_count = course_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,

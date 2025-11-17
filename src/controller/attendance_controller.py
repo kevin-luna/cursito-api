@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -14,7 +15,7 @@ attendance_repo = AttendanceRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Attendance])
-def get_attendances(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_attendances(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     attendances, total_pages, total_count = attendance_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=attendances,
@@ -97,7 +98,7 @@ def delete_attendance(attendance_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/worker/{worker_id}", response_model=PaginatedResponse[Attendance])
-def get_attendances_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_attendances_by_worker(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     attendances, total_pages, total_count = attendance_repo.get_by_worker_paginated(db, worker_id=worker_id, page=page, limit=limit)
     return PaginatedResponse(
         items=attendances,
@@ -108,7 +109,7 @@ def get_attendances_by_worker(worker_id: UUID, page: int = 1, limit: int = 100, 
 
 
 @router.get("/course/{course_id}", response_model=PaginatedResponse[Attendance])
-def get_attendances_by_course(course_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_attendances_by_course(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     attendances, total_pages, total_count = attendance_repo.get_by_course_paginated(db, course_id=course_id, page=page, limit=limit)
     return PaginatedResponse(
         items=attendances,
@@ -120,10 +121,10 @@ def get_attendances_by_course(course_id: UUID, page: int = 1, limit: int = 100, 
 
 @router.get("/worker/{worker_id}/course/{course_id}", response_model=PaginatedResponse[Attendance])
 def get_attendances_by_worker_and_course(
-    worker_id: UUID, 
-    course_id: UUID, 
-    page: int = 1, 
-    limit: int = 100, 
+    worker_id: UUID,
+    course_id: UUID,
+    page: PositiveInt = 1,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     attendances, total_pages, total_count = attendance_repo.get_by_worker_and_course_paginated(db, worker_id=worker_id, course_id=course_id, page=page, limit=limit)
@@ -136,7 +137,7 @@ def get_attendances_by_worker_and_course(
 
 
 @router.get("/date/{attendance_date}", response_model=PaginatedResponse[Attendance])
-def get_attendances_by_date(attendance_date: date, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_attendances_by_date(attendance_date: date, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     attendances, total_pages, total_count = attendance_repo.get_by_date_paginated(db, attendance_date=attendance_date, page=page, limit=limit)
     return PaginatedResponse(
         items=attendances,
@@ -168,10 +169,10 @@ def get_attendances_by_course_and_date(
 
 @router.get("/date-range/", response_model=PaginatedResponse[Attendance])
 def get_attendances_by_date_range(
-    start_date: date, 
-    end_date: date, 
-    page: int = 1, 
-    limit: int = 100, 
+    start_date: date,
+    end_date: date,
+    page: PositiveInt = 1,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     if start_date > end_date:

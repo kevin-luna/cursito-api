@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ survey_repo = SurveyRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Survey])
-def get_surveys(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_surveys(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     surveys, total_pages, total_count = survey_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=surveys,
@@ -83,7 +84,7 @@ def delete_survey(survey_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/search/{name}", response_model=PaginatedResponse[Survey])
-def search_surveys(name: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_surveys(name: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     surveys, total_pages, total_count = survey_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
     return PaginatedResponse(
         items=surveys,

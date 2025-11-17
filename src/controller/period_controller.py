@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -14,7 +15,7 @@ period_repo = PeriodRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Period])
-def get_periods(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_periods(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     periods, total_pages, total_count = period_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=periods,
@@ -101,7 +102,7 @@ def delete_period(period_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/active/", response_model=PaginatedResponse[Period])
-def get_active_periods(current_date: date = None, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_active_periods(current_date: date = None, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     if current_date is None:
         current_date = date.today()
     periods, total_pages, total_count = period_repo.get_active_periods_paginated(db, current_date=current_date, page=page, limit=limit)
@@ -115,10 +116,10 @@ def get_active_periods(current_date: date = None, page: int = 1, limit: int = 10
 
 @router.get("/date-range/", response_model=PaginatedResponse[Period])
 def get_periods_by_date_range(
-    start_date: date, 
-    end_date: date, 
-    page: int = 1, 
-    limit: int = 100, 
+    start_date: date,
+    end_date: date,
+    page: PositiveInt = 1,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
     if start_date >= end_date:

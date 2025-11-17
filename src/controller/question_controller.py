@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -13,7 +14,7 @@ question_repo = QuestionRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Question])
-def get_questions(page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_questions(page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     questions, total_pages, total_count = question_repo.get_multi_paginated(db, page=page, limit=limit)
     return PaginatedResponse(
         items=questions,
@@ -85,7 +86,7 @@ def delete_question(question_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/survey/{survey_id}", response_model=PaginatedResponse[Question])
-def get_questions_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def get_questions_by_survey(survey_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     questions, total_pages, total_count = question_repo.get_by_survey_paginated(db, survey_id=survey_id, page=page, limit=limit)
     return PaginatedResponse(
         items=questions,
@@ -96,7 +97,7 @@ def get_questions_by_survey(survey_id: UUID, page: int = 1, limit: int = 100, db
 
 
 @router.get("/search/{text}", response_model=PaginatedResponse[Question])
-def search_questions(text: str, page: int = 1, limit: int = 100, db: Session = Depends(get_db)):
+def search_questions(text: str, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     questions, total_pages, total_count = question_repo.search_by_text_paginated(db, text=text, page=page, limit=limit)
     return PaginatedResponse(
         items=questions,
