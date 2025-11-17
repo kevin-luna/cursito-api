@@ -12,16 +12,15 @@ class CourseBase(BaseModel):
     end_date: date
     start_time: time
     end_time: time
-    type: int  # 0 = diplomado, 1 = taller
-    mode: int  # 0 = virtual, 1 = presencial
-    profile: int  # 0 = formacion, 1 = actualización docente
+    course_type: int  # 0 = diplomado, 1 = taller
+    modality: int  # 0 = virtual, 1 = presencial
+    course_profile: int  # 0 = formacion, 1 = actualización docente
     goal: str
     details: Optional[str] = None
-    instructors: Optional[List[UUID]] = None
 
 
 class CourseCreate(CourseBase):
-    pass
+    instructors: List[UUID]  # Required for creating a course
 
 
 class CourseUpdate(BaseModel):
@@ -32,9 +31,9 @@ class CourseUpdate(BaseModel):
     end_date: Optional[date] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
-    type: Optional[int] = None
-    mode: Optional[int] = None
-    profile: Optional[int] = None
+    course_type: Optional[int] = None
+    modality: Optional[int] = None
+    course_profile: Optional[int] = None
     goal: Optional[str] = None
     details: Optional[str] = None
 
