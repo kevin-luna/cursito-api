@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import date
 import math
 from ..model.course import Course
+from ..model.worker import Worker
 from ..dto.course import CourseCreate, CourseUpdate
 from .base import BaseRepository
 from ..model.instructor import Instructor
@@ -111,4 +112,11 @@ class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
         total_count = db.query(Course).filter(Course.name.ilike(f"%{name}%")).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Course).filter(Course.name.ilike(f"%{name}%")).offset(offset).limit(limit).all()
+        return items, total_pages, total_count
+
+    def get_instructors(self, db: Session, courseId: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Worker], int, int]:
+        offset = (page - 1) * limit
+        total_count = db.query(Worker).join(Instructor, Instructor.worker_id == Worker.id).filter(Instructor.course_id == courseId).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Worker).join(Instructor, Instructor.worker_id == Worker.id).filter(Instructor.course_id == courseId).all()
         return items, total_pages, total_count

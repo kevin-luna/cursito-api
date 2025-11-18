@@ -5,6 +5,7 @@ from uuid import UUID
 import math
 from ..model.worker import Worker
 from ..model.instructor import Instructor
+from ..model.enrolling import Enrolling
 from ..model.course import Course
 from ..dto.worker import WorkerCreate, WorkerUpdate
 from .base import BaseRepository
@@ -88,4 +89,18 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
             Worker.father_surname.ilike(f"%{name}%") |
             Worker.mother_surname.ilike(f"%{name}%")
         ).offset(offset).limit(limit).all()
+        return items, total_pages, total_count
+
+    def get_teaching_courses(self, db: Session, instructor: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Course],int,int]:
+        offset = (page - 1) * limit
+        total_count = db.query(Course).join(Instructor, Course.id == Instructor.course_id).filter(Instructor.worker_id == instructor).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Course).join(Instructor).filter(Course.id == Instructor.course_id).filter(Instructor.worker_id == instructor).all()
+        return items, total_pages, total_count
+    
+    def get_enrolled_courses(self, db: Session, instructor: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Course],int,int]:
+        offset = (page - 1) * limit
+        total_count = db.query(Course).join(Enrolling, Course.id == Enrolling.course_id).filter(Enrolling.worker_id == instructor).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Course).join(Enrolling, Course.id == Enrolling.course_id).filter(Enrolling.worker_id == instructor).all()
         return items, total_pages, total_count

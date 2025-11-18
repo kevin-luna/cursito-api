@@ -3,14 +3,20 @@ from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
+from enum import Enum
 
 from ..database import get_db
 from ..dto.worker import Worker, WorkerCreate, WorkerUpdate, WorkerResponse
 from ..dto.pagination import PaginatedResponse
 from ..repository.worker_repository import WorkerRepository
+from ..dto.course import Course
 
 router = APIRouter(prefix="/workers", tags=["workers"])
 worker_repo = WorkerRepository()
+
+class CourseType(str, Enum):
+    teaching = "teaching"
+    enrolled = "enrolled"
 
 
 @router.get("/", response_model=PaginatedResponse[Worker])
@@ -160,3 +166,16 @@ def get_worker_by_email(email: str, db: Session = Depends(get_db)):
             detail="Worker not found"
         )
     return worker
+
+@router.get("/{workerId}/courses", response_model=PaginatedResponse[Course])
+def get_teaching_courses(workerId: UUID, courseType: CourseType, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+    if(courseType == 'teaching'):
+        courses, total_pages, total_count = worker_repo.get_teaching_courses(db,workerId)
+    elif(courseType == 'enrolled'):
+        courses, total_pages, total_count = worker_repo.get_enrolled_courses(db,workerId)
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )

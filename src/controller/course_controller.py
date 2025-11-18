@@ -7,6 +7,7 @@ from datetime import date
 
 from ..database import get_db
 from ..dto.course import Course, CourseCreate, CourseUpdate
+from ..dto.worker import Worker
 from ..dto.pagination import PaginatedResponse
 from ..repository.course_repository import CourseRepository
 from ..repository.instructor_repository import InstructorRepository
@@ -213,6 +214,17 @@ def search_courses(name: str, page: PositiveInt = 1, limit: int = 100, db: Sessi
     courses, total_pages, total_count = course_repo.search_by_name_paginated(db, name=name, page=page, limit=limit)
     return PaginatedResponse(
         items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
+
+
+@router.get("/{courseId}/instructors", response_model=PaginatedResponse[Worker])
+def get_instructors(courseId: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+    instructors, total_pages, total_count = course_repo.get_instructors(db, courseId)
+    return PaginatedResponse(
+        items=instructors,
         total_pages=total_pages,
         page=page,
         total_count=total_count
