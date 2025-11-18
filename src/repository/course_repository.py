@@ -6,6 +6,7 @@ import math
 from ..model.course import Course
 from ..model.worker import Worker
 from ..model.enrolling import Enrolling
+from ..model.attendance import Attendance
 from ..dto.course import CourseCreate, CourseUpdate
 from .base import BaseRepository
 from ..model.instructor import Instructor
@@ -26,6 +27,32 @@ class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
         db.commit()
         db.refresh(course_obj)
         return course_obj
+
+    def update(self, db: Session, db_obj: Course, obj_in: CourseUpdate) -> Course:
+        """
+        Update a course and handle instructors relationship separately.
+        """
+        # Get the update data and exclude instructors
+        obj_data = obj_in.model_dump(exclude_unset=True, exclude={'instructors'})
+
+        # Update regular fields
+        for field, value in obj_data.items():
+            setattr(db_obj, field, value)
+
+        # Handle instructors if provided
+        if obj_in.instructors is not None:
+            # Delete existing instructors
+            db.query(Instructor).filter(Instructor.course_id == db_obj.id).delete(synchronize_session=False)
+
+            # Add new instructors
+            for instructor_id in obj_in.instructors:
+                instructor_obj = Instructor(worker_id=instructor_id, course_id=db_obj.id)
+                db.add(instructor_obj)
+
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
     def get_by_period(self, db: Session, period_id: UUID) -> List[Course]:
         return db.query(Course).filter(Course.period_id == period_id).all()
@@ -136,3 +163,27 @@ class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
             Enrolling.course_id == course_id
         ).all()
         return items, total_pages, total_count
+
+    def delete(self, db: Session, id: UUID) -> Optional[Course]:
+        """
+        Delete a course and all related records (instructors, enrollments, attendances) in cascade.
+        """
+        # Get the course first
+        course = db.query(Course).filter(Course.id == id).first()
+        if not course:
+            return None
+
+        # Delete related instructors
+        db.query(Instructor).filter(Instructor.course_id == id).delete(synchronize_session=False)
+
+        # Delete related attendances
+        db.query(Attendance).filter(Attendance.course_id == id).delete(synchronize_session=False)
+
+        # Delete related enrollments
+        db.query(Enrolling).filter(Enrolling.course_id == id).delete(synchronize_session=False)
+
+        # Finally, delete the course itself
+        db.delete(course)
+        db.commit()
+
+        return course

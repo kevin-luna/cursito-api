@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from uuid import UUID
 import math
