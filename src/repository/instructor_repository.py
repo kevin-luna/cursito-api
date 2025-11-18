@@ -4,6 +4,7 @@ from uuid import UUID
 import math
 from ..model.instructor import Instructor
 from ..model.course import Course
+from ..model.worker import Worker
 from ..dto.instructor import InstructorCreate, InstructorUpdate
 from .base import BaseRepository
 from datetime import date, time
@@ -29,6 +30,14 @@ class InstructorRepository(BaseRepository[Instructor, InstructorCreate, Instruct
 
     def get_workers_by_course(self, db: Session, course_id: UUID) -> List[Instructor]:
         return db.query(Instructor).filter(Instructor.course_id == course_id).all()
+    
+    def check_instructor_list(self, db: Session, instructors: List[UUID]) -> bool:
+        unique_instructor_ids = set(instructors)
+        expected_count = len(unique_instructor_ids)
+        found_count = db.query(Worker).filter(
+            Worker.id.in_(unique_instructor_ids)
+        ).count()
+        return expected_count == found_count
 
     def check_availability(self, db: Session, worker_id: UUID, start_date: date, end_date: date, start_time: time, end_time: time) -> bool:
         return db.query(Instructor).join(Course).filter(Instructor.worker_id == worker_id, Course.start_date.between(start_date, end_date), Course.end_date.between(start_date, end_date), Course.start_time.between(start_time, end_time), Course.end_time.between(start_time, end_time)).count() == 0

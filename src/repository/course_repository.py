@@ -13,11 +13,11 @@ class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
     def __init__(self):
         super().__init__(Course)
 
-    def create(self, db: Session, course: CourseCreate, instructors: List[UUID]) -> Course:
-        course_obj = Course(**course.model_dump())
+    def create(self, db: Session, course: CourseCreate) -> Course:
+        course_obj = Course(**course.model_dump(exclude={'instructors'}))
         db.add(course_obj)
         course_obj.instructors = []
-        for instructor in instructors:
+        for instructor in course.instructors:
             instructor_obj = Instructor(worker_id=instructor, course_id=course_obj.id)
             db.add(instructor_obj)
             course_obj.instructors.append(instructor_obj)

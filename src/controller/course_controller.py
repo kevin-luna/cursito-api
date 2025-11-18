@@ -60,17 +60,12 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             detail="Invalid instructors"
         )
 
-    if not instructor_repo.check_availability(db, course.instructors[0], course.start_date, course.end_date):
+    if not instructor_repo.check_availability(db, course.instructors, course.start_date, course.end_date, course.start_time, course.end_time):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Instructor is not available"
         )
     
-    if not instructor_repo.check_availability(db, course.instructors[1], course.start_date, course.end_date):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Instructor is not available"
-        )
 
     # Validate date range
     if course.start_date >= course.end_date:
@@ -86,7 +81,7 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             detail="Start time must be before end time"
         )
     
-    return course_repo.create(db, obj_in=course)
+    return course_repo.create(db, course)
 
 
 @router.put("/{course_id}", response_model=Course)
