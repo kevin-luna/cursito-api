@@ -220,11 +220,36 @@ def search_courses(name: str, page: PositiveInt = 1, limit: int = 100, db: Sessi
     )
 
 
-@router.get("/{courseId}/instructors", response_model=PaginatedResponse[Worker])
-def get_instructors(courseId: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
-    instructors, total_pages, total_count = course_repo.get_instructors(db, courseId)
+@router.get("/{course_id}/instructors", response_model=PaginatedResponse[Worker])
+def get_instructors(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+    course = course_repo.get(db, id=course_id)
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+    
+    instructors, total_pages, total_count = course_repo.get_instructors(db, course_id)
     return PaginatedResponse(
         items=instructors,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
+
+
+@router.get("/{course_id}/enrollments", response_model=PaginatedResponse[Worker])
+def get_course_enrollments(course_id: UUID,  page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+    course = course_repo.get(db, id=course_id)
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+
+    enrollments, total_pages, total_count = course_repo.get_enrollments_with_workers(db, course_id)
+    return PaginatedResponse(
+        items=enrollments,
         total_pages=total_pages,
         page=page,
         total_count=total_count
