@@ -146,6 +146,13 @@ def update_course(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Period not found"
         )
+    
+    instructors_count = len(course_update.instructors)
+    if instructors_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A course must have at least 1 instructor"
+        )
 
     # Validate date range if dates are being updated
     start_date = course_update.start_date or course.start_date
