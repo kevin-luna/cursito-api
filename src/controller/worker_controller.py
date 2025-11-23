@@ -43,14 +43,27 @@ def get_worker(worker_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=Worker, status_code=status.HTTP_201_CREATED)
 def create_worker(worker: WorkerCreate, db: Session = Depends(get_db)):
-    # Check if worker with same email already exists
-    existing_worker = worker_repo.get_by_email(db, email=worker.email)
+    # Sanitize all string fields - remove extra spaces at start and end
+    worker.email = worker.email.strip()
+    worker.rfc = worker.rfc.strip()
+    worker.curp = worker.curp.strip()
+    worker.name = worker.name.strip()
+    worker.father_surname = worker.father_surname.strip()
+    if worker.mother_surname:
+        worker.mother_surname = worker.mother_surname.strip()
+    if worker.telephone:
+        worker.telephone = worker.telephone.strip()
+    if worker.password:
+        worker.password = worker.password.strip()
+
+    # Check if worker with same email already exists (case-insensitive comparison)
+    existing_worker = worker_repo.get_by_email(db, email=worker.email.lower())
     if existing_worker:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Worker with this email already exists"
         )
-    
+
     # Check if worker with same RFC already exists
     existing_worker = worker_repo.get_by_rfc(db, rfc=worker.rfc)
     if existing_worker:
@@ -58,7 +71,7 @@ def create_worker(worker: WorkerCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Worker with this RFC already exists"
         )
-    
+
     # Check if worker with same CURP already exists
     existing_worker = worker_repo.get_by_curp(db, curp=worker.curp)
     if existing_worker:
@@ -66,14 +79,17 @@ def create_worker(worker: WorkerCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Worker with this CURP already exists"
         )
-    
+
+    # Convert email to lowercase before saving
+    worker.email = worker.email.lower()
+
     return worker_repo.create(db, obj_in=worker)
 
 
 @router.put("/{worker_id}", response_model=Worker)
 def update_worker(
-    worker_id: UUID, 
-    worker_update: WorkerUpdate, 
+    worker_id: UUID,
+    worker_update: WorkerUpdate,
     db: Session = Depends(get_db)
 ):
     worker = worker_repo.get(db, id=worker_id)
@@ -82,16 +98,38 @@ def update_worker(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Worker not found"
         )
-    
-    # Check if new email conflicts with existing worker
+
+    # Sanitize all string fields - remove extra spaces at start and end
     if worker_update.email:
-        existing_worker = worker_repo.get_by_email(db, email=worker_update.email)
-        if existing_worker and existing_worker.id != worker_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Worker with this email already exists"
-            )
-    
+        worker_update.email = worker_update.email.strip()
+    if worker_update.rfc:
+        worker_update.rfc = worker_update.rfc.strip()
+    if worker_update.curp:
+        worker_update.curp = worker_update.curp.strip()
+    if worker_update.name:
+        worker_update.name = worker_update.name.strip()
+    if worker_update.father_surname:
+        worker_update.father_surname = worker_update.father_surname.strip()
+    if worker_update.mother_surname:
+        worker_update.mother_surname = worker_update.mother_surname.strip()
+    if worker_update.telephone:
+        worker_update.telephone = worker_update.telephone.strip()
+    if worker_update.password:
+        worker_update.password = worker_update.password.strip()
+
+    # Check if new email conflicts with existing worker (case-insensitive comparison)
+    if worker_update.email:
+        # Compare with existing worker's email in lowercase
+        if worker.email.lower() != worker_update.email.lower():
+            existing_worker = worker_repo.get_by_email(db, email=worker_update.email.lower())
+            if existing_worker and existing_worker.id != worker_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Worker with this email already exists"
+                )
+        # Convert email to lowercase before saving
+        worker_update.email = worker_update.email.lower()
+
     # Check if new RFC conflicts with existing worker
     if worker_update.rfc:
         existing_worker = worker_repo.get_by_rfc(db, rfc=worker_update.rfc)
@@ -100,7 +138,7 @@ def update_worker(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Worker with this RFC already exists"
             )
-    
+
     # Check if new CURP conflicts with existing worker
     if worker_update.curp:
         existing_worker = worker_repo.get_by_curp(db, curp=worker_update.curp)
@@ -109,7 +147,7 @@ def update_worker(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Worker with this CURP already exists"
             )
-    
+
     return worker_repo.update(db, db_obj=worker, obj_in=worker_update)
 
 
