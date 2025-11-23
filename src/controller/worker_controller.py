@@ -167,12 +167,12 @@ def get_worker_by_email(email: str, db: Session = Depends(get_db)):
         )
     return worker
 
-@router.get("/{workerId}/courses", response_model=PaginatedResponse[Course])
-def get_teaching_courses(workerId: UUID, courseType: CourseType, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/{worker_id}/courses", response_model=PaginatedResponse[Course])
+def get_teaching_courses(worker_id: UUID, courseType: CourseType, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     if(courseType == 'teaching'):
-        courses, total_pages, total_count = worker_repo.get_teaching_courses(db,workerId)
+        courses, total_pages, total_count = worker_repo.get_teaching_courses(db,worker_id)
     elif(courseType == 'enrolled'):
-        courses, total_pages, total_count = worker_repo.get_enrolled_courses(db,workerId)
+        courses, total_pages, total_count = worker_repo.get_enrolled_courses(db,worker_id)
     return PaginatedResponse(
         items=courses,
         total_pages=total_pages,

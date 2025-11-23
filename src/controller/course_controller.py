@@ -11,10 +11,12 @@ from ..dto.worker import Worker
 from ..dto.pagination import PaginatedResponse
 from ..repository.course_repository import CourseRepository
 from ..repository.instructor_repository import InstructorRepository
+from ..repository.period_repository import PeriodRepository
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 course_repo = CourseRepository()
 instructor_repo = InstructorRepository()
+period_repo = PeriodRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Course])
@@ -41,6 +43,14 @@ def get_course(course_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=Course, status_code=status.HTTP_201_CREATED)
 def create_course(course: CourseCreate, db: Session = Depends(get_db)):
+    # Validate period exists
+    period = period_repo.get(db, id=course.period_id)
+    if not period:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Period not found"
+        )
+
     #Validate instructors
     instructors_count = len(course.instructors)
     if instructors_count == 0:
@@ -66,7 +76,7 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Instructor is not available"
         )
-    
+
 
     # Validate date range
     if course.start_date >= course.end_date:
@@ -74,21 +84,34 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    
+
     # Validate time range
     if course.start_time >= course.end_time:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start time must be before end time"
         )
-    
+
+    # Validate course dates are within period dates
+    if course.start_date < period.start_date or course.start_date > period.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Course start date must be between period start date ({period.start_date}) and end date ({period.end_date})"
+        )
+
+    if course.end_date < period.start_date or course.end_date > period.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Course end date must be between period start date ({period.start_date}) and end date ({period.end_date})"
+        )
+
     return course_repo.create(db, course)
 
 
 @router.put("/{course_id}", response_model=Course)
 def update_course(
-    course_id: UUID, 
-    course_update: CourseUpdate, 
+    course_id: UUID,
+    course_update: CourseUpdate,
     db: Session = Depends(get_db)
 ):
     course = course_repo.get(db, id=course_id)
@@ -97,7 +120,16 @@ def update_course(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found"
         )
-    
+
+    # Get the period (use updated period_id or existing one)
+    period_id = course_update.period_id or course.period_id
+    period = period_repo.get(db, id=period_id)
+    if not period:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Period not found"
+        )
+
     # Validate date range if dates are being updated
     start_date = course_update.start_date or course.start_date
     end_date = course_update.end_date or course.end_date
@@ -106,7 +138,7 @@ def update_course(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    
+
     # Validate time range if times are being updated
     start_time = course_update.start_time or course.start_time
     end_time = course_update.end_time or course.end_time
@@ -115,7 +147,20 @@ def update_course(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start time must be before end time"
         )
-    
+
+    # Validate course dates are within period dates
+    if start_date < period.start_date or start_date > period.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Course start date must be between period start date ({period.start_date}) and end date ({period.end_date})"
+        )
+
+    if end_date < period.start_date or end_date > period.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Course end date must be between period start date ({period.start_date}) and end date ({period.end_date})"
+        )
+
     return course_repo.update(db, db_obj=course, obj_in=course_update)
 
 
