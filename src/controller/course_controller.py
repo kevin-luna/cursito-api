@@ -43,6 +43,13 @@ def get_course(course_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=Course, status_code=status.HTTP_201_CREATED)
 def create_course(course: CourseCreate, db: Session = Depends(get_db)):
+    # Sanitize all string fields - remove extra spaces at start and end
+    course.target = course.target.strip()
+    course.name = course.name.strip()
+    course.goal = course.goal.strip()
+    if course.details:
+        course.details = course.details.strip()
+
     # Validate period exists
     period = period_repo.get(db, id=course.period_id)
     if not period:
@@ -120,6 +127,16 @@ def update_course(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found"
         )
+
+    # Sanitize all string fields - remove extra spaces at start and end
+    if course_update.target:
+        course_update.target = course_update.target.strip()
+    if course_update.name:
+        course_update.name = course_update.name.strip()
+    if course_update.goal:
+        course_update.goal = course_update.goal.strip()
+    if course_update.details:
+        course_update.details = course_update.details.strip()
 
     # Get the period (use updated period_id or existing one)
     period_id = course_update.period_id or course.period_id
