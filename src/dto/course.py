@@ -36,7 +36,7 @@ class CourseUpdate(BaseModel):
     course_profile: Optional[int] = None
     goal: Optional[str] = None
     details: Optional[str] = None
-    instructors: Optional[List[UUID]]
+    instructors: Optional[List[UUID]] = None
 
 
 class Course(CourseBase):
