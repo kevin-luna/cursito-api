@@ -40,11 +40,32 @@ class InstructorRepository(BaseRepository[Instructor, InstructorCreate, Instruct
         ).count()
         return expected_count == found_count
 
-    def check_availability(self, db: Session, worker_id: UUID, start_date: date, end_date: date, start_time: time, end_time: time) -> bool:
-        return db.query(Instructor).join(Course).filter(Instructor.worker_id == worker_id, Course.start_date.between(start_date, end_date), Course.end_date.between(start_date, end_date), Course.start_time.between(start_time, end_time), Course.end_time.between(start_time, end_time)).count() == 0
+    def check_availability(self, db: Session, worker_list: List[UUID], start_date: date, end_date: date, start_time: time, end_time: time, exclude_course_id: Optional[UUID] = None) -> bool:
+        """
+        Check if workers are available (no schedule conflicts) for the given date and time range.
+        Returns True if all workers are available, False if there's a conflict.
 
-    def check_availability(self, db: Session, worker_list: List[UUID], start_date: date, end_date: date, start_time: time, end_time: time) -> bool:
-        return db.query(Instructor).join(Course).filter(Instructor.worker_id.in_(worker_list), Course.start_date.between(start_date, end_date), Course.end_date.between(start_date, end_date), Course.start_time.between(start_time, end_time), Course.end_time.between(start_time, end_time)).count() == 0
+        A conflict occurs when:
+        - Date ranges overlap: new_start <= existing_end AND new_end >= existing_start
+        - AND time ranges overlap: new_start_time < existing_end_time AND new_end_time > existing_start_time
+        """
+        query = db.query(Instructor).join(Course).filter(
+            Instructor.worker_id.in_(worker_list),
+            # Date overlap: new course dates overlap with existing course dates
+            Course.start_date <= end_date,
+            Course.end_date >= start_date,
+            # Time overlap: new course times overlap with existing course times
+            Course.start_time < end_time,
+            Course.end_time > start_time
+        )
+
+        # Exclude the current course when updating
+        if exclude_course_id is not None:
+            query = query.filter(Course.id != exclude_course_id)
+
+        # If count > 0, there's a conflict (not available)
+        # If count == 0, no conflicts (available)
+        return query.count() == 0
 
     def get_by_worker_paginated(self, db: Session, worker_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Instructor], int, int]:
         offset = (page - 1) * limit

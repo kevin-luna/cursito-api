@@ -146,13 +146,27 @@ def update_course(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Period not found"
         )
-    
-    instructors_count = len(course_update.instructors)
-    if instructors_count == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A course must have at least 1 instructor"
-        )
+
+    # Validate instructors if provided
+    if course_update.instructors is not None:
+        instructors_count = len(course_update.instructors)
+        if instructors_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A course must have at least 1 instructor"
+            )
+
+        if instructors_count > 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A course can only have 2 instructors"
+            )
+
+        if not instructor_repo.check_instructor_list(db, course_update.instructors):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid instructors"
+            )
 
     # Validate date range if dates are being updated
     start_date = course_update.start_date or course.start_date
@@ -184,6 +198,14 @@ def update_course(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Course end date must be between period start date ({period.start_date}) and end date ({period.end_date})"
         )
+
+    # Validate instructor availability if instructors are being updated
+    if course_update.instructors is not None:
+        if not instructor_repo.check_availability(db, course_update.instructors, start_date, end_date, start_time, end_time, exclude_course_id=course_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Instructor is not available"
+            )
 
     return course_repo.update(db, db_obj=course, obj_in=course_update)
 
