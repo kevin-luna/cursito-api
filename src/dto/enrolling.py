@@ -2,16 +2,19 @@ from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
 from decimal import Decimal
+from .course import Course
 
 
 class EnrollingBase(BaseModel):
     worker_id: UUID
-    course_id: UUID
+    course: Course
     final_grade: Optional[Decimal] = None
 
 
-class EnrollingCreate(EnrollingBase):
-    pass
+class EnrollingCreate(BaseModel):
+    worker_id: UUID
+    course_id: UUID
+    final_grade: Optional[Decimal] = None
 
 
 class EnrollingUpdate(BaseModel):

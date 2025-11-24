@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from uuid import UUID
 from decimal import Decimal
 import math
@@ -74,5 +74,5 @@ class EnrollingRepository(BaseRepository[Enrolling, EnrollingCreate, EnrollingUp
         offset = (page - 1) * limit
         total_count = db.query(Enrolling).filter(Enrolling.worker_id == worker_id).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
-        items = db.query(Enrolling).filter(Enrolling.worker_id == worker_id).offset(offset).limit(limit).all()
+        items = db.query(Enrolling).options(joinedload(Enrolling.course)).filter(Enrolling.worker_id == worker_id).offset(offset).limit(limit).all()
         return items, total_pages, total_count

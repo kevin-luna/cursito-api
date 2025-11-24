@@ -143,14 +143,3 @@ def get_enrolled_workers(course_id: UUID, page: PositiveInt = 1, limit: int = 10
         page=page,
         total_count=total_count
     )
-
-
-@router.get("/worker/{worker_id}/enrollments", response_model=PaginatedResponse[Enrolling])
-def get_worker_enrollments(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
-    enrollings, total_pages, total_count = enrolling_repo.get_worker_enrollments_paginated(db, worker_id=worker_id, page=page, limit=limit)
-    return PaginatedResponse(
-        items=enrollings,
-        total_pages=total_pages,
-        page=page,
-        total_count=total_count
-    )
