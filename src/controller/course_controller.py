@@ -8,6 +8,7 @@ from datetime import date
 from ..database import get_db
 from ..dto.course import Course, CourseCreate, CourseUpdate
 from ..dto.worker import Worker
+from ..dto.enrolling import Enrolling
 from ..dto.pagination import PaginatedResponse
 from ..repository.course_repository import CourseRepository
 from ..repository.instructor_repository import InstructorRepository
@@ -329,8 +330,8 @@ def get_instructors(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db
     )
 
 
-@router.get("/{course_id}/enrollments", response_model=PaginatedResponse[Worker])
-def get_course_enrollments(course_id: UUID,  page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/{course_id}/enrollments", response_model=PaginatedResponse[Enrolling])
+def get_enrolled_workers(course_id: UUID,  page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
     course = course_repo.get(db, id=course_id)
     if not course:
         raise HTTPException(
@@ -338,7 +339,7 @@ def get_course_enrollments(course_id: UUID,  page: PositiveInt = 1, limit: int =
             detail="Course not found"
         )
 
-    enrollments, total_pages, total_count = course_repo.get_enrollments_with_workers(db, course_id)
+    enrollments, total_pages, total_count = course_repo.get_enrolled_workers(db, course_id)
     return PaginatedResponse(
         items=enrollments,
         total_pages=total_pages,

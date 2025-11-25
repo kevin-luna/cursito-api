@@ -9,13 +9,11 @@ from ..database import get_db
 from ..dto.worker import Worker, WorkerCreate, WorkerUpdate, WorkerResponse
 from ..dto.pagination import PaginatedResponse
 from ..repository.worker_repository import WorkerRepository
-from ..repository.enrolling_repository import EnrollingRepository
 from ..dto.course import Course
 from ..dto.enrolling import Enrolling
 
 router = APIRouter(prefix="/workers", tags=["workers"])
 worker_repo = WorkerRepository()
-enrolling_repo = EnrollingRepository()
 
 class CourseType(str, Enum):
     teaching = "teaching"
@@ -223,7 +221,7 @@ def get_teaching_courses(worker_id: UUID, courseType: CourseType, page: Positive
 
 @router.get("/{worker_id}/enrollments", response_model=PaginatedResponse[Enrolling])
 def get_enrollments(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
-    enrollings, total_pages, total_count = enrolling_repo.get_worker_enrollments_paginated(db, worker_id=worker_id, page=page, limit=limit)
+    enrollings, total_pages, total_count = worker_repo.get_enrollments(db, worker_id=worker_id, page=page, limit=limit)
     return PaginatedResponse(
         items=enrollings,
         total_pages=total_pages,

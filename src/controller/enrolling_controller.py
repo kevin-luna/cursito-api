@@ -132,14 +132,3 @@ def get_enrollings_by_grade_range(
         page=page,
         total_count=total_count
     )
-
-
-@router.get("/course/{course_id}/enrolled", response_model=PaginatedResponse[Enrolling])
-def get_enrolled_workers(course_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
-    enrollings, total_pages, total_count = enrolling_repo.get_enrolled_workers_paginated(db, course_id=course_id, page=page, limit=limit)
-    return PaginatedResponse(
-        items=enrollings,
-        total_pages=total_pages,
-        page=page,
-        total_count=total_count
-    )

@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, noload
 from sqlalchemy import exists
 from uuid import UUID
 import math
@@ -103,4 +103,11 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
         total_count = db.query(Course).join(Enrolling, Course.id == Enrolling.course_id).filter(Enrolling.worker_id == instructor).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Course).join(Enrolling, Course.id == Enrolling.course_id).filter(Enrolling.worker_id == instructor).all()
+        return items, total_pages, total_count
+    
+    def get_enrollments(self, db: Session, worker_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Enrolling], int, int]:
+        offset = (page - 1) * limit
+        total_count = db.query(Enrolling).filter(Enrolling.worker_id == worker_id).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Enrolling).options(joinedload(Enrolling.course), noload(Enrolling.worker)).filter(Enrolling.worker_id == worker_id).offset(offset).limit(limit).all()
         return items, total_pages, total_count

@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, noload
 from uuid import UUID
 from datetime import date
 import math
@@ -149,19 +149,11 @@ class CourseRepository(BaseRepository[Course, CourseCreate, CourseUpdate]):
         items = db.query(Worker).join(Instructor, Instructor.worker_id == Worker.id).filter(Instructor.course_id == courseId).all()
         return items, total_pages, total_count
 
-    def get_enrollments_with_workers(self, db: Session, course_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Worker],int,int]:
+    def get_enrolled_workers(self, db: Session, course_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Enrolling],int,int]:
         offset = (page - 1) * limit
-        total_count = db.query(Worker).join(
-            Enrolling, Enrolling.worker_id == Worker.id
-        ).filter(
-            Enrolling.course_id == course_id
-        ).count()
-        total_pages = math.ceil(total_count/limit)
-        items = total_count = db.query(Worker).join(
-            Enrolling, Enrolling.worker_id == Worker.id
-        ).filter(
-            Enrolling.course_id == course_id
-        ).all()
+        total_count = db.query(Enrolling).filter(Enrolling.course_id == course_id).count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = db.query(Enrolling).options(joinedload(Enrolling.worker), noload(Enrolling.course)).filter(Enrolling.course_id == course_id).offset(offset).limit(limit).all()
         return items, total_pages, total_count
 
     def delete(self, db: Session, id: UUID) -> Optional[Course]:

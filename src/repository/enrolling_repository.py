@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, noload
 from uuid import UUID
 from decimal import Decimal
 import math
@@ -69,10 +69,4 @@ class EnrollingRepository(BaseRepository[Enrolling, EnrollingCreate, EnrollingUp
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Enrolling).filter(Enrolling.course_id == course_id).offset(offset).limit(limit).all()
         return items, total_pages, total_count
-
-    def get_worker_enrollments_paginated(self, db: Session, worker_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Enrolling], int, int]:
-        offset = (page - 1) * limit
-        total_count = db.query(Enrolling).filter(Enrolling.worker_id == worker_id).count()
-        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
-        items = db.query(Enrolling).options(joinedload(Enrolling.course)).filter(Enrolling.worker_id == worker_id).offset(offset).limit(limit).all()
-        return items, total_pages, total_count
+    

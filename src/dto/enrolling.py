@@ -3,11 +3,12 @@ from typing import Optional
 from uuid import UUID
 from decimal import Decimal
 from .course import Course
+from .worker import Worker
 
 
 class EnrollingBase(BaseModel):
-    worker_id: UUID
-    course: Course
+    worker: Optional[Worker]
+    course: Optional[Course]
     final_grade: Optional[Decimal] = None
 
 
