@@ -47,14 +47,24 @@ def create_enrolling(enrolling: EnrollingCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Worker is already enrolled in this course"
         )
-    
+
+    # Check if course has reached maximum capacity of 30 students
+    current_enrollments = db.query(enrolling_repo.model).filter(
+        enrolling_repo.model.course_id == enrolling.course_id
+    ).count()
+    if current_enrollments >= 30:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Course has reached maximum capacity of 30 students"
+        )
+
     return enrolling_repo.create(db, obj_in=enrolling)
 
 
 @router.put("/{enrolling_id}", response_model=Enrolling)
 def update_enrolling(
-    enrolling_id: UUID, 
-    enrolling_update: EnrollingUpdate, 
+    enrolling_id: UUID,
+    enrolling_update: EnrollingUpdate,
     db: Session = Depends(get_db)
 ):
     enrolling = enrolling_repo.get(db, id=enrolling_id)
@@ -63,7 +73,7 @@ def update_enrolling(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Enrolling not found"
         )
-    
+
     # Check if new assignment conflicts with existing enrolling
     worker_id = enrolling_update.worker_id or enrolling.worker_id
     course_id = enrolling_update.course_id or enrolling.course_id
@@ -75,7 +85,18 @@ def update_enrolling(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Worker is already enrolled in this course"
         )
-    
+
+    # Check if course change would exceed maximum capacity
+    if enrolling_update.course_id and enrolling_update.course_id != enrolling.course_id:
+        current_enrollments = db.query(enrolling_repo.model).filter(
+            enrolling_repo.model.course_id == course_id
+        ).count()
+        if current_enrollments >= 30:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Course has reached maximum capacity of 30 students"
+            )
+
     return enrolling_repo.update(db, db_obj=enrolling, obj_in=enrolling_update)
 
 
