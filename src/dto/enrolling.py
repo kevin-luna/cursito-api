@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from decimal import Decimal
 from .course import Course
@@ -29,3 +29,19 @@ class Enrolling(EnrollingBase):
 
     class Config:
         from_attributes = True
+
+
+class WorkerGrade(BaseModel):
+    worker_id: UUID
+    final_grade: Decimal
+
+
+class BulkGradeUpdate(BaseModel):
+    course_id: UUID
+    grades: List[WorkerGrade]
+
+
+class BulkGradeResponse(BaseModel):
+    updated: int
+    skipped: int
+    errors: List[str] = []

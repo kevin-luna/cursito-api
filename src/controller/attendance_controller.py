@@ -6,12 +6,14 @@ from uuid import UUID
 from datetime import date
 
 from ..database import get_db
-from ..dto.attendance import Attendance, AttendanceCreate, AttendanceUpdate
+from ..dto.attendance import Attendance, AttendanceCreate, AttendanceUpdate, BulkAttendanceCreate, BulkAttendanceResponse
 from ..dto.pagination import PaginatedResponse
 from ..repository.attendance_repository import AttendanceRepository
+from ..repository.course_repository import CourseRepository
 
 router = APIRouter(prefix="/attendances", tags=["attendances"])
 attendance_repo = AttendanceRepository()
+course_repo = CourseRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Attendance])
@@ -186,4 +188,63 @@ def get_attendances_by_date_range(
         total_pages=total_pages,
         page=page,
         total_count=total_count
+    )
+
+
+@router.post("/bulk", response_model=BulkAttendanceResponse, status_code=status.HTTP_201_CREATED)
+def create_bulk_attendances(
+    bulk_data: BulkAttendanceCreate,
+    db: Session = Depends(get_db)
+):
+    # Validate that the course exists
+    course = course_repo.get(db, id=bulk_data.course_id)
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+
+    # Validate that the date is within the course duration
+    if bulk_data.date < course.start_date or bulk_data.date > course.end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Attendance date must be between course start date ({course.start_date}) and end date ({course.end_date})"
+        )
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for worker_id in bulk_data.worker_ids:
+        try:
+            # Check if attendance already exists
+            existing_attendance = attendance_repo.get_by_worker_course_and_date(
+                db,
+                worker_id=worker_id,
+                course_id=bulk_data.course_id,
+                attendance_date=bulk_data.date
+            )
+
+            if existing_attendance:
+                skipped += 1
+                errors.append(f"Attendance already exists for worker {worker_id}")
+                continue
+
+            # Create attendance
+            attendance_create = AttendanceCreate(
+                worker_id=worker_id,
+                course_id=bulk_data.course_id,
+                date=bulk_data.date
+            )
+            attendance_repo.create(db, obj_in=attendance_create)
+            created += 1
+
+        except Exception as e:
+            skipped += 1
+            errors.append(f"Error creating attendance for worker {worker_id}: {str(e)}")
+
+    return BulkAttendanceResponse(
+        created=created,
+        skipped=skipped,
+        errors=errors
     )

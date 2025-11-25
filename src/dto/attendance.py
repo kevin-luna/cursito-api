@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import date
 
@@ -25,3 +25,15 @@ class Attendance(AttendanceBase):
 
     class Config:
         from_attributes = True
+
+
+class BulkAttendanceCreate(BaseModel):
+    course_id: UUID
+    date: date
+    worker_ids: List[UUID]
+
+
+class BulkAttendanceResponse(BaseModel):
+    created: int
+    skipped: int
+    errors: List[str] = []

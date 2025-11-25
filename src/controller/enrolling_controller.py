@@ -6,12 +6,14 @@ from uuid import UUID
 from decimal import Decimal
 
 from ..database import get_db
-from ..dto.enrolling import Enrolling, EnrollingCreate, EnrollingUpdate
+from ..dto.enrolling import Enrolling, EnrollingCreate, EnrollingUpdate, BulkGradeUpdate, BulkGradeResponse
 from ..dto.pagination import PaginatedResponse
 from ..repository.enrolling_repository import EnrollingRepository
+from ..repository.course_repository import CourseRepository
 
 router = APIRouter(prefix="/enrollings", tags=["enrollings"])
 enrolling_repo = EnrollingRepository()
+course_repo = CourseRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Enrolling])
@@ -152,4 +154,57 @@ def get_enrollings_by_grade_range(
         total_pages=total_pages,
         page=page,
         total_count=total_count
+    )
+
+
+@router.post("/bulk-grades", response_model=BulkGradeResponse)
+def update_bulk_grades(
+    bulk_data: BulkGradeUpdate,
+    db: Session = Depends(get_db)
+):
+    # Validate that the course exists
+    course = course_repo.get(db, id=bulk_data.course_id)
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+
+    updated = 0
+    skipped = 0
+    errors = []
+
+    for grade_data in bulk_data.grades:
+        try:
+            # Validate grade range (0-100)
+            if grade_data.final_grade < 0 or grade_data.final_grade > 100:
+                skipped += 1
+                errors.append(f"Grade for worker {grade_data.worker_id} must be between 0 and 100")
+                continue
+
+            # Find the enrollment
+            enrolling = enrolling_repo.get_by_worker_and_course(
+                db,
+                worker_id=grade_data.worker_id,
+                course_id=bulk_data.course_id
+            )
+
+            if not enrolling:
+                skipped += 1
+                errors.append(f"Worker {grade_data.worker_id} is not enrolled in this course")
+                continue
+
+            # Update the grade
+            enrolling_update = EnrollingUpdate(final_grade=grade_data.final_grade)
+            enrolling_repo.update(db, db_obj=enrolling, obj_in=enrolling_update)
+            updated += 1
+
+        except Exception as e:
+            skipped += 1
+            errors.append(f"Error updating grade for worker {grade_data.worker_id}: {str(e)}")
+
+    return BulkGradeResponse(
+        updated=updated,
+        skipped=skipped,
+        errors=errors
     )
