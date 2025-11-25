@@ -159,16 +159,6 @@ def get_attendances_by_worker_and_date(
     return attendances
 
 
-@router.get("/course/{course_id}/date/{attendance_date}", response_model=List[Attendance])
-def get_attendances_by_course_and_date(
-    course_id: UUID, 
-    attendance_date: date, 
-    db: Session = Depends(get_db)
-):
-    attendances = attendance_repo.get_by_course_and_date(db, course_id=course_id, attendance_date=attendance_date)
-    return attendances
-
-
 @router.get("/date-range/", response_model=PaginatedResponse[Attendance])
 def get_attendances_by_date_range(
     start_date: date,

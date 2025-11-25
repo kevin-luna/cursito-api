@@ -3,6 +3,8 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import date
 
+from .worker import Worker
+
 
 class AttendanceBase(BaseModel):
     worker_id: UUID
@@ -37,3 +39,6 @@ class BulkAttendanceResponse(BaseModel):
     created: int
     skipped: int
     errors: List[str] = []
+
+class AttendanceList(BaseModel):
+    items: List[Worker]

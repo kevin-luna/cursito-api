@@ -10,14 +10,17 @@ from ..dto.course import Course, CourseCreate, CourseUpdate
 from ..dto.worker import Worker
 from ..dto.enrolling import Enrolling
 from ..dto.pagination import PaginatedResponse
+from ..dto.attendance import AttendanceList
 from ..repository.course_repository import CourseRepository
 from ..repository.instructor_repository import InstructorRepository
 from ..repository.period_repository import PeriodRepository
+from ..repository.attendance_repository import AttendanceRepository
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 course_repo = CourseRepository()
 instructor_repo = InstructorRepository()
 period_repo = PeriodRepository()
+attendance_repo = AttendanceRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Course])
@@ -346,3 +349,12 @@ def get_enrolled_workers(course_id: UUID,  page: PositiveInt = 1, limit: int = 1
         page=page,
         total_count=total_count
     )
+
+@router.get("/{course_id}/attendances", response_model=AttendanceList)
+def get_attendances_by_course_and_date(
+    course_id: UUID, 
+    attendance_date: date, 
+    db: Session = Depends(get_db)
+):
+    attendances = attendance_repo.get_by_course_and_date(db, course_id=course_id, attendance_date=attendance_date)
+    return AttendanceList(items=attendances)

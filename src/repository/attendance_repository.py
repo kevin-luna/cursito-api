@@ -1,9 +1,10 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from uuid import UUID
 from datetime import date
 import math
 from ..model.attendance import Attendance
+from ..model.worker import Worker
 from ..dto.attendance import AttendanceCreate, AttendanceUpdate
 from .base import BaseRepository
 
@@ -33,10 +34,10 @@ class AttendanceRepository(BaseRepository[Attendance, AttendanceCreate, Attendan
             Attendance.date == attendance_date
         ).all()
 
-    def get_by_course_and_date(self, db: Session, course_id: UUID, attendance_date: date) -> List[Attendance]:
-        return db.query(Attendance).filter(
+    def get_by_course_and_date(self, db: Session, course_id: UUID, attendance_date: date) -> List[Worker]:
+        return db.query(Worker).join(Attendance, Attendance.worker_id == Worker.id).filter(
             Attendance.course_id == course_id,
-            Attendance.date == attendance_date
+            Attendance.attendance_date == attendance_date
         ).all()
 
     def get_by_worker_course_and_date(self, db: Session, worker_id: UUID, course_id: UUID, attendance_date: date) -> Optional[Attendance]:
