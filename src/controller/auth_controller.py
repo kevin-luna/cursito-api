@@ -11,6 +11,7 @@ from src.utils.auth import (
 )
 from src.middleware.auth_middleware import get_current_worker
 from src.model.worker import Worker
+from ..dto.worker import WorkerUpdate
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -92,9 +93,9 @@ async def change_password(
         )
 
     # Actualizar la contraseña
-    worker_repo = WorkerRepository(db)
+    worker_repo = WorkerRepository()
     current_worker.password = get_password_hash(password_data.new_password)
-    worker_repo.update(str(current_worker.id), current_worker)
+    worker_repo.update(db,current_worker, WorkerUpdate(password=password_data.new_password))
 
     return {
         "message": "Contraseña actualizada exitosamente"
