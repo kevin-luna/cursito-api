@@ -26,12 +26,12 @@ class AttendanceRepository(BaseRepository[Attendance, AttendanceCreate, Attendan
         ).all()
 
     def get_by_date(self, db: Session, attendance_date: date) -> List[Attendance]:
-        return db.query(Attendance).filter(Attendance.date == attendance_date).all()
+        return db.query(Attendance).filter(Attendance.attendance_date == attendance_date).all()
 
     def get_by_worker_and_date(self, db: Session, worker_id: UUID, attendance_date: date) -> List[Attendance]:
         return db.query(Attendance).filter(
             Attendance.worker_id == worker_id,
-            Attendance.date == attendance_date
+            Attendance.attendance_date == attendance_date
         ).all()
 
     def get_by_course_and_date(self, db: Session, course_id: UUID, attendance_date: date) -> List[Worker]:
@@ -44,13 +44,13 @@ class AttendanceRepository(BaseRepository[Attendance, AttendanceCreate, Attendan
         return db.query(Attendance).filter(
             Attendance.worker_id == worker_id,
             Attendance.course_id == course_id,
-            Attendance.date == attendance_date
+            Attendance.attendance_date == attendance_date
         ).first()
 
     def get_date_range(self, db: Session, start_date: date, end_date: date) -> List[Attendance]:
         return db.query(Attendance).filter(
-            Attendance.date >= start_date,
-            Attendance.date <= end_date
+            Attendance.attendance_date >= start_date,
+            Attendance.attendance_date <= end_date
         ).all()
 
     def get_by_worker_paginated(self, db: Session, worker_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Attendance], int, int]:
@@ -82,20 +82,20 @@ class AttendanceRepository(BaseRepository[Attendance, AttendanceCreate, Attendan
 
     def get_by_date_paginated(self, db: Session, attendance_date: date, page: int = 1, limit: int = 100) -> Tuple[List[Attendance], int, int]:
         offset = (page - 1) * limit
-        total_count = db.query(Attendance).filter(Attendance.date == attendance_date).count()
+        total_count = db.query(Attendance).filter(Attendance.attendance_date == attendance_date).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
-        items = db.query(Attendance).filter(Attendance.date == attendance_date).offset(offset).limit(limit).all()
+        items = db.query(Attendance).filter(Attendance.attendance_date == attendance_date).offset(offset).limit(limit).all()
         return items, total_pages, total_count
 
     def get_date_range_paginated(self, db: Session, start_date: date, end_date: date, page: int = 1, limit: int = 100) -> Tuple[List[Attendance], int, int]:
         offset = (page - 1) * limit
         total_count = db.query(Attendance).filter(
-            Attendance.date >= start_date,
-            Attendance.date <= end_date
+            Attendance.attendance_date >= start_date,
+            Attendance.attendance_date <= end_date
         ).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Attendance).filter(
-            Attendance.date >= start_date,
-            Attendance.date <= end_date
+            Attendance.attendance_date >= start_date,
+            Attendance.attendance_date <= end_date
         ).offset(offset).limit(limit).all()
         return items, total_pages, total_count

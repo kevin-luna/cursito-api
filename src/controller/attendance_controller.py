@@ -224,7 +224,7 @@ def create_bulk_attendances(
             attendance_create = AttendanceCreate(
                 worker_id=worker_id,
                 course_id=bulk_data.course_id,
-                date=bulk_data.date
+                attendance_date=bulk_data.date
             )
             attendance_repo.create(db, obj_in=attendance_create)
             created += 1

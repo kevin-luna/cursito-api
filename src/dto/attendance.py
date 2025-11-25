@@ -9,7 +9,7 @@ from .worker import Worker
 class AttendanceBase(BaseModel):
     worker_id: UUID
     course_id: UUID
-    date: date
+    attendance_date: date
 
 
 class AttendanceCreate(AttendanceBase):
