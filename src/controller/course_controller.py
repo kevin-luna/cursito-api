@@ -3,7 +3,7 @@ from pydantic import PositiveInt
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
-from datetime import date
+from datetime import date, timedelta
 
 from ..database import get_db
 from ..dto.course import Course, CourseCreate, CourseUpdate
@@ -21,6 +21,33 @@ course_repo = CourseRepository()
 instructor_repo = InstructorRepository()
 period_repo = PeriodRepository()
 attendance_repo = AttendanceRepository()
+
+
+def validate_course_duration_and_weekdays(start_date: date, end_date: date):
+    """
+    Validates that a course:
+    1. Does not last more than 5 days
+    2. Does not include weekend days (Saturday=5, Sunday=6)
+    """
+    # Calculate duration in days
+    duration = (end_date - start_date).days + 1
+
+    if duration > 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Course duration cannot exceed 5 days"
+        )
+
+    # Check if any day in the range falls on a weekend
+    current_date = start_date
+    while current_date <= end_date:
+        # weekday() returns 0=Monday, 6=Sunday
+        if current_date.weekday() in [5, 6]:  # Saturday or Sunday
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Course dates cannot include weekends (Saturday or Sunday)"
+            )
+        current_date += timedelta(days=1)
 
 
 @router.get("/", response_model=PaginatedResponse[Course])
@@ -95,6 +122,9 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
+
+    # Validate course duration and weekdays
+    validate_course_duration_and_weekdays(course.start_date, course.end_date)
 
     # Validate time range
     if course.start_time >= course.end_time:
@@ -180,6 +210,9 @@ def update_course(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
+
+    # Validate course duration and weekdays
+    validate_course_duration_and_weekdays(start_date, end_date)
 
     # Validate time range if times are being updated
     start_time = course_update.start_time or course.start_time
