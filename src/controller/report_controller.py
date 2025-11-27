@@ -24,7 +24,7 @@ def download_attendance_list(
 
     Returns a PDF with:
     - Course information
-    - List of enrolled workers with RFC, gender, and grades
+    - List of enrolled workers with attendance per day
     """
     try:
         pdf_buffer = pdf_service.generate_attendance_list(db, course_id)
@@ -34,6 +34,34 @@ def download_attendance_list(
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f"attachment; filename=attendance_list_{course_id}.pdf"
+            }
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
+
+
+@router.get("/grades/{course_id}")
+def download_grades_list(
+    course_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """
+    Download grades list PDF for a course
+
+    Returns a PDF with:
+    - Course information
+    - List of enrolled workers with RFC, gender, and final grades
+    """
+    try:
+        pdf_buffer = pdf_service.generate_grades_list(db, course_id)
+
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=grades_list_{course_id}.pdf"
             }
         )
     except ValueError as e:

@@ -4,13 +4,14 @@ This guide explains how to use the PDF report generation endpoints in the Cursit
 
 ## Overview
 
-The API provides five PDF report endpoints that generate professional, formatted documents for various purposes:
+The API provides six PDF report endpoints that generate professional, formatted documents for various purposes:
 
-1. **Attendance List** - Course attendance with student details and grades
-2. **Enrollment Certificate** - Individual enrollment documentation
-3. **Instructor Courses List** - All courses taught by an instructor
-4. **Follow-up Survey Responses** - Survey answers for CSAT evaluation
-5. **Opinion Survey Responses** - Survey answers for opinion evaluation
+1. **Attendance List** - Course attendance with daily attendance marks per student
+2. **Grades List** - Course grades with student details and final grades
+3. **Enrollment Certificate** - Individual enrollment documentation
+4. **Instructor Courses List** - All courses taught by an instructor
+5. **Follow-up Survey Responses** - Survey answers for CSAT evaluation
+6. **Opinion Survey Responses** - Survey answers for opinion evaluation
 
 ## Technology
 
@@ -26,7 +27,33 @@ Reports are generated using **ReportLab**, a powerful Python PDF library that cr
 
 **Endpoint:** `GET /reports/attendance/{course_id}`
 
-**Description:** Generates a PDF with the attendance list for a course, including:
+**Description:** Generates a PDF with the attendance list for a course in horizontal format, including:
+- Course information (name, type, modality, dates, schedule)
+- Horizontal table with one column per course day
+- List of enrolled workers with:
+  - Sequential number
+  - Full name
+  - RFC
+  - Gender (M/F)
+  - Attendance marks (✓/○) for each day
+- Automatically switches to landscape orientation for courses with more than 10 days
+- Total participant count and total days
+- Generation timestamp
+
+**Example:**
+```bash
+curl -O "http://localhost:8000/reports/attendance/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+```
+
+**Response:** PDF file downloaded as `attendance_list_{course_id}.pdf`
+
+---
+
+### 2. Grades List
+
+**Endpoint:** `GET /reports/grades/{course_id}`
+
+**Description:** Generates a PDF with the grades list for a course, including:
 - Course information (name, type, modality, dates, schedule)
 - List of enrolled workers with:
   - Sequential number
@@ -39,14 +66,14 @@ Reports are generated using **ReportLab**, a powerful Python PDF library that cr
 
 **Example:**
 ```bash
-curl -O "http://localhost:8000/reports/attendance/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+curl -O "http://localhost:8000/reports/grades/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
 
-**Response:** PDF file downloaded as `attendance_list_{course_id}.pdf`
+**Response:** PDF file downloaded as `grades_list_{course_id}.pdf`
 
 ---
 
-### 2. Enrollment Certificate
+### 3. Enrollment Certificate
 
 **Endpoint:** `GET /reports/enrollment/{worker_id}/{course_id}`
 
@@ -85,7 +112,7 @@ curl -O "http://localhost:8000/reports/enrollment/worker-uuid/course-uuid"
 
 ---
 
-### 3. Instructor Courses List
+### 4. Instructor Courses List
 
 **Endpoint:** `GET /reports/instructor-courses/{worker_id}`
 
@@ -116,7 +143,7 @@ curl -O "http://localhost:8000/reports/instructor-courses/instructor-worker-uuid
 
 ---
 
-### 4. Follow-up Survey Responses
+### 5. Follow-up Survey Responses
 
 **Endpoint:** `GET /reports/survey/{worker_id}/{course_id}/followup`
 
@@ -148,7 +175,7 @@ curl -O "http://localhost:8000/reports/survey/worker-uuid/course-uuid/followup"
 
 ---
 
-### 5. Opinion Survey Responses
+### 6. Opinion Survey Responses
 
 **Endpoint:** `GET /reports/survey/{worker_id}/{course_id}/opinion`
 

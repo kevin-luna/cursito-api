@@ -6,7 +6,7 @@ from io import BytesIO
 from typing import List, Optional
 from datetime import datetime
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
@@ -14,6 +14,7 @@ from reportlab.platypus.flowables import KeepTogether
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from sqlalchemy.orm import Session
 from uuid import UUID
+from datetime import timedelta
 
 from ..model.course import Course
 from ..model.worker import Worker
@@ -27,6 +28,7 @@ from ..repository.enrolling_repository import EnrollingRepository
 from ..repository.answer_repository import AnswerRepository
 from ..repository.question_repository import QuestionRepository
 from ..repository.instructor_repository import InstructorRepository
+from ..repository.attendance_repository import AttendanceRepository
 
 
 class PDFReportService:
@@ -39,6 +41,7 @@ class PDFReportService:
         self.answer_repo = AnswerRepository()
         self.question_repo = QuestionRepository()
         self.instructor_repo = InstructorRepository()
+        self.attendance_repo = AttendanceRepository()
 
     def _get_styles(self):
         """Get custom styles for the PDF"""
@@ -80,8 +83,8 @@ class PDFReportService:
 
     def generate_attendance_list(self, db: Session, course_id: UUID) -> BytesIO:
         """
-        Generate attendance list PDF for a course
-        Includes: course info, enrolled workers with RFC, gender, and grades
+        Generate attendance list PDF for a course in horizontal format
+        Includes: course info, enrolled workers with RFC, gender, and attendance per day
         """
         # Fetch course data
         course = self.course_repo.get(db, course_id)
@@ -91,9 +94,32 @@ class PDFReportService:
         # Fetch enrollments
         enrollments = self.enrolling_repo.get_by_course(db, course_id)
 
+        # Fetch all attendance records for this course
+        all_attendances = self.attendance_repo.get_by_course(db, course_id)
+
+        # Generate list of all course days
+        course_days = []
+        if course.start_date and course.end_date:
+            current_date = course.start_date
+            while current_date <= course.end_date:
+                course_days.append(current_date)
+                current_date += timedelta(days=1)
+
+        # Create attendance lookup: {worker_id: {date: True}}
+        attendance_lookup = {}
+        for attendance in all_attendances:
+            if attendance.worker_id not in attendance_lookup:
+                attendance_lookup[attendance.worker_id] = {}
+            attendance_lookup[attendance.worker_id][attendance.attendance_date] = True
+
+        # Determine if we need landscape orientation (if many days)
+        use_landscape = len(course_days) > 10
+        pagesize = landscape(letter) if use_landscape else letter
+
         # Create PDF buffer
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+        doc = SimpleDocTemplate(buffer, pagesize=pagesize, topMargin=0.5*inch, bottomMargin=0.5*inch,
+                               leftMargin=0.5*inch, rightMargin=0.5*inch)
         story = []
         styles = self._get_styles()
 
@@ -117,7 +143,129 @@ class PDFReportService:
 
         story.append(Spacer(1, 0.3*inch))
 
-        # Attendance table
+        # Build attendance table header
+        header_row = ['No.', 'Nombre', 'RFC', 'Sexo']
+
+        # Add column for each day
+        for day in course_days:
+            header_row.append(day.strftime('%d/%m'))
+
+        table_data = [header_row]
+
+        # Build data rows
+        for idx, enrollment in enumerate(enrollments, start=1):
+            worker = enrollment.worker
+            full_name = f"{worker.name} {worker.father_surname or ''} {worker.mother_surname or ''}".strip()
+            gender = 'M' if worker.sex == 1 else 'F' if worker.sex == 0 else 'N/A'
+
+            row = [
+                str(idx),
+                full_name,
+                worker.rfc or 'N/A',
+                gender
+            ]
+
+            # Add attendance mark for each day
+            for day in course_days:
+                if worker.id in attendance_lookup and day in attendance_lookup[worker.id]:
+                    row.append('✓')
+                else:
+                    row.append('○')
+
+            table_data.append(row)
+
+        # Calculate column widths dynamically
+        base_cols_width = [0.4*inch, 2*inch, 1.2*inch, 0.5*inch]
+
+        # Calculate remaining width for day columns
+        if use_landscape:
+            available_width = 10*inch - sum(base_cols_width)
+        else:
+            available_width = 7*inch - sum(base_cols_width)
+
+        day_col_width = available_width / len(course_days) if course_days else 0.5*inch
+        day_col_width = max(day_col_width, 0.35*inch)  # Minimum width
+
+        col_widths = base_cols_width + [day_col_width] * len(course_days)
+
+        # Create table
+        table = Table(table_data, colWidths=col_widths)
+        table.setStyle(TableStyle([
+            # Header style
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+
+            # Body style
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+
+        story.append(table)
+        story.append(Spacer(1, 0.3*inch))
+
+        # Footer
+        total_days = len(course_days)
+        footer_text = f"<i>Total de participantes: {len(enrollments)} | Total de días: {total_days}</i><br/>" \
+                     f"<i>Generado: {datetime.now().strftime('%d/%m/%Y %H:%M')}</i>"
+        story.append(Paragraph(footer_text, styles['CustomInfo']))
+
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+
+    def generate_grades_list(self, db: Session, course_id: UUID) -> BytesIO:
+        """
+        Generate grades list PDF for a course
+        Includes: course info, enrolled workers with RFC, gender, and final grade
+        """
+        # Fetch course data
+        course = self.course_repo.get(db, course_id)
+        if not course:
+            raise ValueError(f"Course with ID {course_id} not found")
+
+        # Fetch enrollments
+        enrollments = self.enrolling_repo.get_by_course(db, course_id)
+
+        # Create PDF buffer
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.75*inch, bottomMargin=0.75*inch)
+        story = []
+        styles = self._get_styles()
+
+        # Header
+        story.append(Paragraph("LISTA DE CALIFICACIONES", styles['CustomTitle']))
+        story.append(Spacer(1, 0.2*inch))
+
+        # Course information
+        course_info = [
+            f"<b>Curso:</b> {course.name}",
+            f"<b>Tipo:</b> {'Diplomado' if course.course_type == 0 else 'Taller'}",
+            f"<b>Modalidad:</b> {'Virtual' if course.modality == 0 else 'Presencial'}",
+            f"<b>Perfil:</b> {'Formación' if course.course_profile == 0 else 'Actualización Docente'}",
+            f"<b>Periodo:</b> {course.start_date} - {course.end_date}" if course.start_date and course.end_date else "",
+            f"<b>Horario:</b> {course.start_time} - {course.end_time}" if course.start_time and course.end_time else "",
+        ]
+
+        for info in course_info:
+            if info:
+                story.append(Paragraph(info, styles['CustomInfo']))
+
+        story.append(Spacer(1, 0.3*inch))
+
+        # Grades table
         table_data = [
             ['No.', 'Nombre Completo', 'RFC', 'Sexo', 'Calificación']
         ]
