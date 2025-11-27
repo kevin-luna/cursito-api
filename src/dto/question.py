@@ -6,7 +6,7 @@ from uuid import UUID
 class QuestionBase(BaseModel):
     survey_id: UUID
     question: str
-    position: int
+    question_order: int
 
 
 class QuestionCreate(QuestionBase):
@@ -16,7 +16,7 @@ class QuestionCreate(QuestionBase):
 class QuestionUpdate(BaseModel):
     survey_id: Optional[UUID] = None
     question: Optional[str] = None
-    position: Optional[int] = None
+    question_order: Optional[int] = None
 
 
 class Question(QuestionBase):

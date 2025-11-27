@@ -12,12 +12,12 @@ class QuestionRepository(BaseRepository[Question, QuestionCreate, QuestionUpdate
         super().__init__(Question)
 
     def get_by_survey(self, db: Session, survey_id: UUID) -> List[Question]:
-        return db.query(Question).filter(Question.survey_id == survey_id).order_by(Question.position).all()
+        return db.query(Question).filter(Question.survey_id == survey_id).order_by(Question.question_order).all()
 
-    def get_by_position(self, db: Session, survey_id: UUID, position: int) -> Optional[Question]:
+    def get_by_order(self, db: Session, survey_id: UUID, question_order: int) -> Optional[Question]:
         return db.query(Question).filter(
             Question.survey_id == survey_id,
-            Question.position == position
+            Question.question_order == question_order
         ).first()
 
     def search_by_text(self, db: Session, text: str) -> List[Question]:
@@ -27,7 +27,7 @@ class QuestionRepository(BaseRepository[Question, QuestionCreate, QuestionUpdate
         offset = (page - 1) * limit
         total_count = db.query(Question).filter(Question.survey_id == survey_id).count()
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
-        items = db.query(Question).filter(Question.survey_id == survey_id).order_by(Question.position).offset(offset).limit(limit).all()
+        items = db.query(Question).filter(Question.survey_id == survey_id).order_by(Question.question_order).offset(offset).limit(limit).all()
         return items, total_pages, total_count
 
     def search_by_text_paginated(self, db: Session, text: str, page: int = 1, limit: int = 100) -> Tuple[List[Question], int, int]:

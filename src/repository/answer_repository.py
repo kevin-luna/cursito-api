@@ -38,6 +38,15 @@ class AnswerRepository(BaseRepository[Answer, AnswerCreate, AnswerUpdate]):
             Answer.question.has(survey_id=survey_id)
         ).all()
 
+    def get_by_worker_survey_and_course(self, db: Session, worker_id: UUID, survey_id: UUID, course_id: UUID) -> List[Answer]:
+        """Get answers from a worker for a specific survey and course"""
+        from ..model.question import Question
+        return db.query(Answer).join(Question).filter(
+            Answer.worker_id == worker_id,
+            Answer.course_id == course_id,
+            Question.survey_id == survey_id
+        ).all()
+
     def search_by_value(self, db: Session, value: str) -> List[Answer]:
         return db.query(Answer).filter(Answer.value.ilike(f"%{value}%")).all()
 

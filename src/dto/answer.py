@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 
@@ -26,3 +26,16 @@ class Answer(AnswerBase):
 
     class Config:
         from_attributes = True
+
+
+class QuestionAnswerItem(BaseModel):
+    """Single question answer without worker_id and course_id"""
+    question_id: UUID
+    value: str
+
+
+class SurveyAnswersSubmit(BaseModel):
+    """Request to submit answers for a survey"""
+    worker_id: UUID
+    course_id: UUID
+    answers: List[QuestionAnswerItem]

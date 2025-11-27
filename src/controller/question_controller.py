@@ -38,7 +38,7 @@ def get_question(question_id: UUID, db: Session = Depends(get_db)):
 @router.post("/", response_model=Question, status_code=status.HTTP_201_CREATED)
 def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
     # Check if position already exists for this survey
-    existing_question = question_repo.get_by_position(db, survey_id=question.survey_id, position=question.position)
+    existing_question = question_repo.get_by_order(db, survey_id=question.survey_id, question_order=question.question_order)
     if existing_question:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -62,13 +62,13 @@ def update_question(
         )
     
     # Check if new position conflicts with existing question
-    if question_update.position:
+    if question_update.question_order:
         survey_id = question_update.survey_id or question.survey_id
-        existing_question = question_repo.get_by_position(db, survey_id=survey_id, position=question_update.position)
+        existing_question = question_repo.get_by_order(db, survey_id=survey_id, question_order=question_update.question_order)
         if existing_question and existing_question.id != question_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Question with this position already exists for this survey"
+                detail="Question with this order already exists for this survey"
             )
     
     return question_repo.update(db, db_obj=question, obj_in=question_update)
