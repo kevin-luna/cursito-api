@@ -120,12 +120,22 @@ curl -O "http://localhost:8000/reports/instructor-courses/instructor-worker-uuid
 
 **Endpoint:** `GET /reports/survey/{worker_id}/{course_id}/followup`
 
-**Description:** Generates a PDF with a worker's responses to the follow-up (CSAT) survey for a specific course.
+**Description:** Generates a PDF with a worker's responses to the follow-up (CSAT) survey for a specific course in form format.
+
+**Format:** Survey presented in form style showing:
+- Questions grouped by sections (Aplicación de Conocimientos, Beneficios del Curso, Obstáculos, Comentarios)
+- Likert scale questions with all 5 options displayed, selected option marked with ✓ and in bold
+- Multiple selection questions (checkboxes) with selected items marked with ✓ and in bold
+- Non-selected options marked with ○
+- Text responses displayed in full
+- **No tables used** - all content presented as formatted paragraphs and lists
 
 **Includes:**
 - Worker and course information
-- All survey questions and answers
-- Formatted responses (Likert scale values converted to text, JSON parsed for multi-select)
+- Section 1: Knowledge Application (3 Likert scale questions)
+- Section 2: Course Benefits (8 multiple-choice options)
+- Section 3: Obstacles (3 checkbox options + optional text)
+- Section 4: Comments and Suggestions (text response)
 
 **Survey ID:** `3d1fa6a2-6d4a-42fa-a474-68c83156f541`
 
@@ -142,12 +152,22 @@ curl -O "http://localhost:8000/reports/survey/worker-uuid/course-uuid/followup"
 
 **Endpoint:** `GET /reports/survey/{worker_id}/{course_id}/opinion`
 
-**Description:** Generates a PDF with a worker's responses to the opinion survey for a specific course.
+**Description:** Generates a PDF with a worker's responses to the opinion survey for a specific course in form format.
+
+**Format:** Survey presented in form style showing:
+- Questions grouped by sections (Instructor, Material Didáctico, Curso, Infraestructura, Comentarios)
+- Each Likert scale question with all 5 options displayed, selected option marked with ✓ and in bold
+- Non-selected options marked with ○
+- Text responses displayed in full
+- **No tables used** - all content presented as formatted paragraphs
 
 **Includes:**
 - Worker and course information
-- All survey questions and answers
-- Formatted responses (Likert scale values converted to text)
+- Section 1: Instructor (7 Likert scale questions)
+- Section 2: Educational Material (3 Likert scale questions)
+- Section 3: Course (4 Likert scale questions)
+- Section 4: Infrastructure (6 Likert scale questions)
+- Section 5: Comments and Suggestions (text response)
 
 **Survey ID:** `c2a77b75-8552-4fe0-ab49-231803244ace`
 
