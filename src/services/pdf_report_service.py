@@ -125,7 +125,7 @@ class PDFReportService:
         for idx, enrollment in enumerate(enrollments, start=1):
             worker = enrollment.worker
             full_name = f"{worker.name} {worker.father_surname or ''} {worker.mother_surname or ''}".strip()
-            gender = 'M' if worker.sex == 0 else 'F' if worker.sex == 1 else 'N/A'
+            gender = 'M' if worker.sex == 1 else 'F' if worker.sex == 0 else 'N/A'
             grade = str(enrollment.final_grade) if enrollment.final_grade else 'N/A'
 
             table_data.append([
@@ -214,7 +214,7 @@ class PDFReportService:
             ['CURP', worker.curp or 'N/A'],
             ['Email', worker.email or 'N/A'],
             ['Teléfono', worker.telephone or 'N/A'],
-            ['Sexo', 'Masculino' if worker.sex == 0 else 'Femenino' if worker.sex == 1 else 'N/A'],
+            ['Sexo', 'Masculino' if worker.sex == 1 else 'Femenino' if worker.sex == 0 else 'N/A'],
             ['Departamento', worker.department.name if worker.department else 'N/A'],
             ['Rol', 'Jefe de Departamento' if worker.position == 0 else 'Docente' if worker.role == 1 else 'N/A'],
         ]
