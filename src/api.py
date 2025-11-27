@@ -14,6 +14,7 @@ from .controller.instructor_controller import router as instructor_router
 from .controller.enrolling_controller import router as enrolling_router
 from .controller.attendance_controller import router as attendance_router
 from .controller.answer_controller import router as answer_router
+from .controller.report_controller import router as report_router
 
 # Create database tables (commented out to avoid connection errors on import)
 # Base.metadata.create_all(bind=engine)
@@ -48,6 +49,7 @@ app.include_router(instructor_router)
 app.include_router(enrolling_router)
 app.include_router(attendance_router)
 app.include_router(answer_router)
+app.include_router(report_router)
 
 # Root endpoint
 @app.get("/")

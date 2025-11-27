@@ -176,6 +176,34 @@ load_dotenv()
 - Required for file uploads and form submissions
 - Integrates seamlessly with FastAPI
 
+#### ReportLab
+**Why chosen:**
+- Industry-standard PDF generation library for Python
+- Powerful layout and styling capabilities
+- Supports tables, charts, and complex formatting
+- Production-ready and well-maintained
+
+**Problems it solves:**
+- **PDF Generation**: Creates professional PDF reports programmatically
+- **Data Presentation**: Formats complex data into readable documents
+- **Automation**: Eliminates manual report creation
+- **Consistency**: Ensures uniform document formatting
+
+**How it facilitates development:**
+```python
+# Generate professional PDF reports
+from reportlab.platypus import SimpleDocTemplate, Table, Paragraph
+
+def generate_report(data):
+    doc = SimpleDocTemplate("report.pdf")
+    story = [
+        Paragraph("Course Attendance", title_style),
+        Table(data, style=custom_table_style)
+    ]
+    doc.build(story)
+    return pdf_buffer
+```
+
 ### Benefits of This Stack
 
 1. **Type Safety Across Layers**: Python type hints → Pydantic → SQLAlchemy → PostgreSQL
@@ -543,6 +571,15 @@ Once the server is running, you can access:
 ### And many more...
 
 Each entity has comprehensive CRUD operations with additional specialized endpoints for common queries.
+
+### Reports (PDF Generation)
+- `GET /reports/attendance/{course_id}` - Download attendance list PDF for a course
+- `GET /reports/enrollment/{worker_id}/{course_id}` - Download enrollment certificate PDF
+- `GET /reports/instructor-courses/{worker_id}` - Download list of courses taught by instructor
+- `GET /reports/survey/{worker_id}/{course_id}/followup` - Download follow-up survey responses PDF
+- `GET /reports/survey/{worker_id}/{course_id}/opinion` - Download opinion survey responses PDF
+
+All report endpoints return PDF files for download with comprehensive formatted information.
 
 ## Development
 
