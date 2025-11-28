@@ -111,3 +111,37 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Enrolling).options(joinedload(Enrolling.course), noload(Enrolling.worker)).filter(Enrolling.worker_id == worker_id).offset(offset).limit(limit).all()
         return items, total_pages, total_count
+
+    def get_available_courses(self, db: Session, worker_id: UUID, page: int = 1, limit: int = 100) -> Tuple[List[Course], int, int]:
+        """
+        Get courses available for a worker to enroll in.
+        Filters out:
+        - Courses where the worker is an instructor
+        - Courses that have already started (start_date <= today)
+        - Courses where the worker is already enrolled
+        """
+        offset = (page - 1) * limit
+        today = date.today()
+
+        # Subquery for courses where worker is an instructor
+        instructor_subquery = db.query(Instructor.course_id).filter(
+            Instructor.worker_id == worker_id
+        )
+
+        # Subquery for courses where worker is already enrolled
+        enrolled_subquery = db.query(Enrolling.course_id).filter(
+            Enrolling.worker_id == worker_id
+        )
+
+        # Main query: courses with start_date > today, worker is not instructor, and worker is not enrolled
+        base_query = db.query(Course).filter(
+            Course.start_date > today,
+            ~Course.id.in_(instructor_subquery),
+            ~Course.id.in_(enrolled_subquery)
+        )
+
+        total_count = base_query.count()
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
+        items = base_query.offset(offset).limit(limit).all()
+
+        return items, total_pages, total_count

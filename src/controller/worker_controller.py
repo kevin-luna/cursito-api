@@ -228,3 +228,33 @@ def get_enrollments(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db
         page=page,
         total_count=total_count
     )
+
+
+@router.get("/{worker_id}/courses/available", response_model=PaginatedResponse[Course])
+def get_available_courses(worker_id: UUID, page: PositiveInt = 1, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Get courses available for a worker to enroll in.
+
+    Returns courses that meet ALL of the following criteria:
+    - Start date is in the future (after today)
+    - Worker is not an instructor of the course
+    - Worker is not already enrolled in the course
+    """
+    # Check if worker exists
+    worker = worker_repo.get(db, id=worker_id)
+    if not worker:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Worker not found"
+        )
+
+    courses, total_pages, total_count = worker_repo.get_available_courses(
+        db, worker_id=worker_id, page=page, limit=limit
+    )
+    return PaginatedResponse(
+        items=courses,
+        total_pages=total_pages,
+        page=page,
+        total_count=total_count
+    )
+
