@@ -4,6 +4,10 @@ from uuid import UUID
 from datetime import date
 import math
 from ..model.period import Period
+from ..model.course import Course
+from ..model.instructor import Instructor
+from ..model.enrolling import Enrolling
+from ..model.attendance import Attendance
 from ..dto.period import PeriodCreate, PeriodUpdate
 from .base import BaseRepository
 
@@ -52,3 +56,35 @@ class PeriodRepository(BaseRepository[Period, PeriodCreate, PeriodUpdate]):
             Period.end_date >= current_date
         ).offset(offset).limit(limit).all()
         return items, total_pages, total_count
+
+    def delete(self, db: Session, id: UUID) -> Optional[Period]:
+        """
+        Delete a period and all related records in cascade.
+        Deletes: courses (and their related instructors, enrollments, attendances)
+        """
+        # Get the period first
+        period = db.query(Period).filter(Period.id == id).first()
+        if not period:
+            return None
+
+        # Get all courses in this period
+        course_ids = db.query(Course.id).filter(Course.period_id == id).all()
+        course_ids = [c[0] for c in course_ids]
+
+        # For each course, delete their related records
+        for course_id in course_ids:
+            # Delete course's instructors
+            db.query(Instructor).filter(Instructor.course_id == course_id).delete(synchronize_session=False)
+            # Delete course's attendances
+            db.query(Attendance).filter(Attendance.course_id == course_id).delete(synchronize_session=False)
+            # Delete course's enrollments
+            db.query(Enrolling).filter(Enrolling.course_id == course_id).delete(synchronize_session=False)
+
+        # Delete all courses in this period
+        db.query(Course).filter(Course.period_id == id).delete(synchronize_session=False)
+
+        # Finally, delete the period itself
+        db.delete(period)
+        db.commit()
+
+        return period

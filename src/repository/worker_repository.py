@@ -7,6 +7,8 @@ from ..model.worker import Worker
 from ..model.instructor import Instructor
 from ..model.enrolling import Enrolling
 from ..model.course import Course
+from ..model.attendance import Attendance
+from ..model.answer import Answer
 from ..dto.worker import WorkerCreate, WorkerUpdate
 from .base import BaseRepository
 from datetime import date, time
@@ -145,3 +147,31 @@ class WorkerRepository(BaseRepository[Worker, WorkerCreate, WorkerUpdate]):
         items = base_query.offset(offset).limit(limit).all()
 
         return items, total_pages, total_count
+
+    def delete(self, db: Session, id: UUID) -> Optional[Worker]:
+        """
+        Delete a worker and all related records in cascade.
+        Deletes: instructors, enrollments, attendances, and answers
+        """
+        # Get the worker first
+        worker = db.query(Worker).filter(Worker.id == id).first()
+        if not worker:
+            return None
+
+        # Delete related answers
+        db.query(Answer).filter(Answer.worker_id == id).delete(synchronize_session=False)
+
+        # Delete related attendances
+        db.query(Attendance).filter(Attendance.worker_id == id).delete(synchronize_session=False)
+
+        # Delete related enrollments
+        db.query(Enrolling).filter(Enrolling.worker_id == id).delete(synchronize_session=False)
+
+        # Delete related instructor records
+        db.query(Instructor).filter(Instructor.worker_id == id).delete(synchronize_session=False)
+
+        # Finally, delete the worker itself
+        db.delete(worker)
+        db.commit()
+
+        return worker

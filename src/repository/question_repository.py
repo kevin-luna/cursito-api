@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 import math
 from ..model.question import Question
+from ..model.answer import Answer
 from ..dto.question import QuestionCreate, QuestionUpdate
 from .base import BaseRepository
 
@@ -36,3 +37,22 @@ class QuestionRepository(BaseRepository[Question, QuestionCreate, QuestionUpdate
         total_pages = math.ceil(total_count / limit) if total_count > 0 else 0
         items = db.query(Question).filter(Question.question.ilike(f"%{text}%")).offset(offset).limit(limit).all()
         return items, total_pages, total_count
+
+    def delete(self, db: Session, id: UUID) -> Optional[Question]:
+        """
+        Delete a question and all related records in cascade.
+        Deletes: answers
+        """
+        # Get the question first
+        question = db.query(Question).filter(Question.id == id).first()
+        if not question:
+            return None
+
+        # Delete all answers for this question
+        db.query(Answer).filter(Answer.question_id == id).delete(synchronize_session=False)
+
+        # Finally, delete the question itself
+        db.delete(question)
+        db.commit()
+
+        return question
