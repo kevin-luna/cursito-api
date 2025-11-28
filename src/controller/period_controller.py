@@ -45,21 +45,30 @@ def create_period(period: PeriodCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Period with this name already exists"
         )
-    
+
     # Validate date range
     if period.start_date >= period.end_date:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    
+
+    # Check if period overlaps with existing periods
+    overlapping_periods = period_repo.get_by_date_range(db, start_date=period.start_date, end_date=period.end_date)
+    if overlapping_periods:
+        overlapping_names = [p.name for p in overlapping_periods]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Period dates overlap with existing period(s): {', '.join(overlapping_names)}"
+        )
+
     return period_repo.create(db, obj_in=period)
 
 
 @router.put("/{period_id}", response_model=Period)
 def update_period(
-    period_id: UUID, 
-    period_update: PeriodUpdate, 
+    period_id: UUID,
+    period_update: PeriodUpdate,
     db: Session = Depends(get_db)
 ):
     period = period_repo.get(db, id=period_id)
@@ -68,7 +77,7 @@ def update_period(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Period not found"
         )
-    
+
     # Check if new name conflicts with existing period
     if period_update.name:
         existing_period = period_repo.get_by_name(db, name=period_update.name)
@@ -77,7 +86,7 @@ def update_period(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Period with this name already exists"
             )
-    
+
     # Validate date range if dates are being updated
     start_date = period_update.start_date or period.start_date
     end_date = period_update.end_date or period.end_date
@@ -86,7 +95,18 @@ def update_period(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start date must be before end date"
         )
-    
+
+    # Check if updated period overlaps with existing periods (excluding itself)
+    overlapping_periods = period_repo.get_by_date_range(db, start_date=start_date, end_date=end_date)
+    # Filter out the current period being updated
+    overlapping_periods = [p for p in overlapping_periods if p.id != period_id]
+    if overlapping_periods:
+        overlapping_names = [p.name for p in overlapping_periods]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Period dates overlap with existing period(s): {', '.join(overlapping_names)}"
+        )
+
     return period_repo.update(db, db_obj=period, obj_in=period_update)
 
 
