@@ -10,10 +10,13 @@ from ..dto.enrolling import Enrolling, EnrollingCreate, EnrollingUpdate, BulkGra
 from ..dto.pagination import PaginatedResponse
 from ..repository.enrolling_repository import EnrollingRepository
 from ..repository.course_repository import CourseRepository
+from ..repository.worker_repository import WorkerRepository
+from ..model.instructor import Instructor
 
 router = APIRouter(prefix="/enrollings", tags=["enrollings"])
 enrolling_repo = EnrollingRepository()
 course_repo = CourseRepository()
+worker_repo = WorkerRepository()
 
 
 @router.get("/", response_model=PaginatedResponse[Enrolling])
@@ -40,6 +43,33 @@ def get_enrolling(enrolling_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=Enrolling, status_code=status.HTTP_201_CREATED)
 def create_enrolling(enrolling: EnrollingCreate, db: Session = Depends(get_db)):
+    # Check if course exists
+    course = course_repo.get(db, id=enrolling.course_id)
+    if not course:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Course not found"
+        )
+
+    # Check if worker exists
+    worker = worker_repo.get(db, id=enrolling.worker_id)
+    if not worker:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Worker not found"
+        )
+
+    # Check if worker is an instructor of this course
+    is_instructor = db.query(Instructor).filter(
+        Instructor.worker_id == enrolling.worker_id,
+        Instructor.course_id == enrolling.course_id
+    ).first()
+    if is_instructor:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An instructor cannot enroll in a course they are teaching"
+        )
+
     # Check if worker is already enrolled in this course
     existing_enrolling = enrolling_repo.get_by_worker_and_course(
         db, worker_id=enrolling.worker_id, course_id=enrolling.course_id
@@ -76,9 +106,40 @@ def update_enrolling(
             detail="Enrolling not found"
         )
 
-    # Check if new assignment conflicts with existing enrolling
+    # Determine the final worker_id and course_id after the update
     worker_id = enrolling_update.worker_id or enrolling.worker_id
     course_id = enrolling_update.course_id or enrolling.course_id
+
+    # Check if new course exists (if course is being updated)
+    if enrolling_update.course_id:
+        course = course_repo.get(db, id=enrolling_update.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+
+    # Check if new worker exists (if worker is being updated)
+    if enrolling_update.worker_id:
+        worker = worker_repo.get(db, id=enrolling_update.worker_id)
+        if not worker:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Worker not found"
+            )
+
+    # Check if worker is an instructor of the course (new or existing)
+    is_instructor = db.query(Instructor).filter(
+        Instructor.worker_id == worker_id,
+        Instructor.course_id == course_id
+    ).first()
+    if is_instructor:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An instructor cannot enroll in a course they are teaching"
+        )
+
+    # Check if new assignment conflicts with existing enrolling
     existing_enrolling = enrolling_repo.get_by_worker_and_course(
         db, worker_id=worker_id, course_id=course_id
     )
