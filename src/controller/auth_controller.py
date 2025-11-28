@@ -86,6 +86,13 @@ async def change_password(
     - **new_password**: Nueva contraseña (mínimo 8 caracteres)
     """
     # Verificar la contraseña actual
+    if len(password_data.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La longitud de la contraseña debe ser de al menos 8 caracteres."
+        )
+
+    # Verificar la contraseña actual
     if not verify_password(password_data.current_password, current_worker.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
